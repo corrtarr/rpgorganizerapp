@@ -30,6 +30,11 @@
 - [ ] Build Login / Auth flow
 - [ ] Set GM vs. Player roles
 
+## Future Features (post-MVP)
+- [ ] Configurable in-game date format (currently hardcoded to The Dark Eye / Aventurian calendar)
+- [ ] Configurable round-robin author order for Timeline entries (pre-fill author field, allow override)
+- [ ] Multilingual UI support (German + English)
+
 ## Before Going Live
 - [ ] Lock down Firestore security rules (see Security above)
 - [ ] Test with all group members

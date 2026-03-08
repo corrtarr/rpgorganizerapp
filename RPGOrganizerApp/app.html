@@ -1,25 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Chronicle</title>
+  <title>Die Chronik</title>
   <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/timeline.css" />
 </head>
-<body>
+<body class="app-body">
 
-  <p style="color: #c9a84c; font-family: Cinzel, serif; text-align:center; margin-top: 3rem;">
-    Welcome, adventurer. The Chronicle is being assembled...
-  </p>
+  <header class="app-header">
+    <span class="app-logo">Die Chronik</span>
+    <nav class="app-nav">
+      <button class="nav-btn active">Zeitleiste</button>
+    </nav>
+    <button class="btn-logout" id="logoutBtn">Abmelden</button>
+  </header>
 
-  <script type="module">
-    import { auth } from '/src/js/firebase-config.js';
-    import { onAuthStateChanged } from 'firebase/auth';
+  <main class="app-main">
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href = '/index.html';
-    });
-  </script>
+    <!-- Timeline View -->
+    <div class="timeline-container">
+      <div class="timeline-toolbar">
+        <h2 class="section-title">Zeitleiste</h2>
+        <button class="btn-action" id="newEntryBtn">+ Neuer Eintrag</button>
+      </div>
+      <div class="timeline-list" id="timelineList">
+        <p class="timeline-loading">Lade Einträge...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal: Neuer Eintrag -->
+  <div class="modal-overlay" id="entryModal" hidden>
+    <div class="modal-card">
+      <h2 class="modal-title">Neuer Eintrag</h2>
+
+      <form id="entryForm">
+
+        <div class="form-group">
+          <label for="entryTitle">Titel</label>
+          <input type="text" id="entryTitle" placeholder="Titel des Ereignisses" required />
+        </div>
+
+        <div class="form-group">
+          <label>Beschreibung</label>
+          <div id="quillEditor"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inGameYear">Jahr</label>
+            <input type="number" id="inGameYear" min="1" placeholder="z.B. 1040" />
+          </div>
+          <div class="form-group form-group--wide">
+            <label for="inGameMonth">Monat (Ingame)</label>
+            <select id="inGameMonth">
+              <option value="Praios">Praios</option>
+              <option value="Rondra">Rondra</option>
+              <option value="Efferd">Efferd</option>
+              <option value="Travia">Travia</option>
+              <option value="Boron">Boron</option>
+              <option value="Hesinde">Hesinde</option>
+              <option value="Firun">Firun</option>
+              <option value="Tsa">Tsa</option>
+              <option value="Phex">Phex</option>
+              <option value="Peraine">Peraine</option>
+              <option value="Ingerimm">Ingerimm</option>
+              <option value="Rahja">Rahja</option>
+              <option value="Namenlose Tage">Namenlose Tage</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inGameDay">Tag</label>
+            <select id="inGameDay"></select>
+          </div>
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="isMultiDay" />
+          Mehrtägig
+        </label>
+
+        <div class="form-row end-date-row" id="endDateRow" hidden>
+          <div class="form-group">
+            <label for="inGameEndYear">Bis Jahr</label>
+            <input type="number" id="inGameEndYear" min="1" placeholder="z.B. 1040" />
+          </div>
+          <div class="form-group form-group--wide">
+            <label for="inGameEndMonth">Bis Monat</label>
+            <select id="inGameEndMonth">
+              <option value="Praios">Praios</option>
+              <option value="Rondra">Rondra</option>
+              <option value="Efferd">Efferd</option>
+              <option value="Travia">Travia</option>
+              <option value="Boron">Boron</option>
+              <option value="Hesinde">Hesinde</option>
+              <option value="Firun">Firun</option>
+              <option value="Tsa">Tsa</option>
+              <option value="Phex">Phex</option>
+              <option value="Peraine">Peraine</option>
+              <option value="Ingerimm">Ingerimm</option>
+              <option value="Rahja">Rahja</option>
+              <option value="Namenlose Tage">Namenlose Tage</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inGameEndDay">Bis Tag</label>
+            <select id="inGameEndDay"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="realDate">Realdatum</label>
+          <input type="date" id="realDate" />
+        </div>
+
+        <div class="form-group">
+          <label for="authorSelect">Autor</label>
+          <select id="authorSelect" required></select>
+        </div>
+
+        <p class="error-msg" id="formError"></p>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancelBtn">Abbrechen</button>
+          <button type="submit" class="btn-primary btn-submit">Speichern</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/src/js/timeline.js"></script>
 
 </body>
 </html>

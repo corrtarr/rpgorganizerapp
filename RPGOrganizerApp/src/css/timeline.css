@@ -1,0 +1,382 @@
+/* ── App layout overrides ────────────────────────────────────── */
+
+.app-body {
+  display: block;
+  align-items: unset;
+  justify-content: unset;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 2rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-gold);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.app-nav {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border-gold);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-logout:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* ── Main content ────────────────────────────────────────────── */
+
+.app-main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ── Timeline toolbar ────────────────────────────────────────── */
+
+.timeline-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+
+.btn-action {
+  background: linear-gradient(135deg, #6b4f12, #8b6914);
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  color: var(--gold-light);
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-action:hover {
+  background: linear-gradient(135deg, #7d5c16, #a07820);
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.2);
+}
+
+/* ── Timeline entries ────────────────────────────────────────── */
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.timeline-empty,
+.timeline-loading {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.timeline-entry {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+.entry-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.entry-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.entry-session {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(139, 105, 20, 0.12);
+  border: 1px solid var(--border-gold);
+  border-radius: 2px;
+  padding: 0.15rem 0.5rem;
+}
+
+.entry-dates {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.entry-author {
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.entry-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  margin-bottom: 0.75rem;
+}
+
+.entry-description {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text-light);
+  /* override Quill padding/border */
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* ── Modal ───────────────────────────────────────────────────── */
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.end-date-row[hidden] {
+  display: none;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  z-index: 200;
+  overflow-y: auto;
+}
+
+.modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 0 60px rgba(0,0,0,0.6);
+}
+
+.modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Form helpers ────────────────────────────────────────────── */
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 100px;
+}
+
+.form-row .form-group--wide {
+  flex: 2;
+}
+
+.form-group select {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border-gold);
+  border-radius: 2px;
+  padding: 0.65rem 0.9rem;
+  color: var(--text-light);
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.form-group select:focus {
+  border-color: var(--gold);
+}
+
+.form-group select option {
+  background: #1a1509;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--gold);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.end-date-row {
+  margin-top: -0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.btn-primary.btn-submit {
+  width: auto;
+  margin-top: 0;
+}
+
+.btn-secondary {
+  background: none;
+  border: 1px solid var(--border-gold);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.btn-secondary:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* ── Quill dark theme overrides ──────────────────────────────── */
+
+.ql-toolbar.ql-snow {
+  background: rgba(0,0,0,0.3);
+  border-color: var(--border-gold) !important;
+  border-radius: 2px 2px 0 0;
+}
+
+.ql-container.ql-snow {
+  background: rgba(0,0,0,0.4);
+  border-color: var(--border-gold) !important;
+  border-radius: 0 0 2px 2px;
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  color: var(--text-light);
+  min-height: 140px;
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--text-muted) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--text-muted) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--gold) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--gold) !important;
+}
+
+.ql-snow .ql-picker-label {
+  color: var(--text-muted) !important;
+}
