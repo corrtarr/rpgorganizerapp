@@ -1,5 +1,10 @@
 <!-- # The Chronicle — Project Context for Claude -->
 
+## GitHub
+- Repo: https://github.com/corrtarr/rpgorganizerapp (public)
+- Branch protection on `main`: require PR + 1 approval before merging
+- GitHub Personal Access Token expires: **April 7, 2026** — generate a new one at github.com → Settings → Developer settings → Personal access tokens
+
 ## What this project is
 A private, password-protected web app for a tabletop RPG group. It helps the group
 track their campaign history, schedule sessions, and manage group info.

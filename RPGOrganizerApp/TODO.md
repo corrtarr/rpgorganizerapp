@@ -17,9 +17,9 @@
 - [x] Set up environment-based Firebase config (.env files)
 - [x] Login page working and tested
 - [x] Auth flow working (login → app, protected route → redirect)
-- [ ] First git commit on main
-- [ ] Connect GitHub remote and push
-- [ ] Set up branch protection rules on GitHub
+- [x] First git commit on main
+- [x] Connect GitHub remote and push
+- [x] Set up branch protection rules on GitHub (require PR + 1 approval)
 
 ## Design
 - [ ] Design pass: adjust darkness, colors, fonts, textures based on feedback
