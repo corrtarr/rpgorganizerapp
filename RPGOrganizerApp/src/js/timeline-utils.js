@@ -8,6 +8,10 @@ const MONTHS = [
   'Firun', 'Tsa', 'Phex', 'Peraine', 'Ingerimm', 'Rahja', 'Namenlose Tage'
 ];
 
+export function getMaxDayForMonth(month) {
+  return month === 'Namenlose Tage' ? 5 : 30;
+}
+
 /**
  * Formats a date string "YYYY-MM-DD" to German format "DD.MM.YYYY".
  * Returns empty string if input is falsy.
@@ -62,7 +66,7 @@ export function nextInGameDay(day, month, year) {
     return { day: null, month, year };
   }
 
-  const maxDay = month === 'Namenlose Tage' ? 5 : 30;
+  const maxDay = getMaxDayForMonth(month);
 
   if (day < maxDay) {
     return { day: day + 1, month, year };

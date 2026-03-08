@@ -259,21 +259,7 @@
 }
 
 .form-group select {
-  width: 100%;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid var(--border-gold);
-  border-radius: 2px;
-  padding: 0.65rem 0.9rem;
-  color: var(--text-light);
-  font-family: 'Lora', serif;
-  font-size: 0.95rem;
-  outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.form-group select:focus {
-  border-color: var(--gold);
 }
 
 .form-group select option {

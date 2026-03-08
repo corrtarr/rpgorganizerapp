@@ -6,18 +6,20 @@ import {
 } from 'firebase/firestore';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
-import { formatDate, formatInGameDateRange, nextInGameDay } from './timeline-utils.js';
+import { formatDate, formatInGameDateRange, nextInGameDay, getMaxDayForMonth } from './timeline-utils.js';
 
 let quill;
 let players = [];
 let lastEntryDate = { day: null, month: null, year: null };
 let nextSessionNumber = 1;
+let initialized = false;
 
 // ── Auth guard ───────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.href = '/index.html';
-  } else {
+  } else if (!initialized) {
+    initialized = true;
     init();
   }
 });
@@ -25,7 +27,7 @@ onAuthStateChanged(auth, (user) => {
 // ── Day select helper ─────────────────────────────────────────
 function populateDaySelect(selectEl, month) {
   const current = parseInt(selectEl.value) || null;
-  const max = month === 'Namenlose Tage' ? 5 : 30;
+  const max = getMaxDayForMonth(month);
   selectEl.innerHTML = '<option value="">—</option>';
   for (let i = 1; i <= max; i++) {
     const opt = document.createElement('option');
@@ -83,8 +85,7 @@ async function init() {
     }
   });
 
-  await loadPlayers();
-  await loadTimeline();
+  await Promise.all([loadPlayers(), loadTimeline()]);
 }
 
 // ── Load players (for author dropdown) ───────────────────────
@@ -125,7 +126,7 @@ async function loadTimeline() {
   } else {
     lastEntryDate = { day: latestData.inGameDay, month: latestData.inGameMonth, year: latestData.inGameYear };
   }
-  const maxSession = Math.max(...snapshot.docs.map(d => d.data().sessionNumber || 0));
+  const maxSession = snapshot.docs.reduce((max, d) => Math.max(max, d.data().sessionNumber || 0), 0);
   nextSessionNumber = maxSession + 1;
 
   snapshot.forEach(doc => {
