@@ -18,6 +18,7 @@ App name: **"The Chronicle"**
 - Firebase SDK loaded via npm
 - Dev server: `npm run dev` → http://localhost:5173
 - Build for deployment: `npm run build` → outputs to `dist/`
+- Preview production build locally: `npm run preview`
 
 ## Project Structure
 ```
@@ -42,21 +43,66 @@ CLAUDE.md            ← This file
 - Auth: Email/Password only (no self-registration — GM creates accounts manually in Firebase Console)
 - Firestore: enabled in test mode (rules must be locked down before go-live)
 
+## Environment Variables
+Both `.env.development` and `.env.production` must contain these 7 variables (all prefixed with `VITE_`):
+```
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID
+```
+These files are git-ignored and must never be committed.
+
+## Auth Flow Architecture
+- Auth logic currently lives as **inline `<script type="module">` in the HTML files** (not in separate JS files yet)
+- `index.html`: if already logged in → redirect to `/app.html`
+- `app.html`: if NOT logged in → redirect to `/index.html`
+- `app.html` is currently a **placeholder** — no real app content yet, just a welcome message
+
+## User Profiles (Firestore)
+- Firebase Authentication stores email + password only — used exclusively for login
+- **Email must never be displayed anywhere in the UI** (breaks immersion)
+- Each user will have a profile document in Firestore (collection: `users`, document ID = Firebase Auth UID)
+- Confirmed fields:
+  - `role` — `"gm"` or `"player"`
+  - `playerName` — real name of the player (e.g. `"Klaus"`)
+  - `characterShortName` — short in-game name (e.g. `"Thorin"`)
+  - `characterFullName` — full in-game name (e.g. `"Thorin Eisenfaust"`)
+  - `color` — hex color code matching their VTT color (e.g. `"#e63946"`) — used to highlight their name in the UI
+- User profiles are created manually in Firebase Console (no admin UI yet — future feature)
+
 ## Design
 - Dark D&D fantasy aesthetic: dark backgrounds, gold accents, medieval fonts
 - Fonts: Cinzel (headings), Lora (body) — loaded from Google Fonts
-- CSS variables defined in style.css under `:root`
+- CSS variables defined in `src/css/style.css` under `:root`:
+  `--bg-dark`, `--bg-card`, `--border-gold`, `--gold`, `--gold-light`, `--text-light`, `--text-muted`, `--red-accent`, `--error`
 - User feedback: currently slightly too dark — a design pass is planned
 
+## Language
+- **UI language: German** — all labels, buttons, headings, and user-facing text must be written in German
+- Future TODO: add multilingual support (German + English) once the app is stable
+
 ## Planned Features (in order)
-1. **Timeline** — vertical scrollable list of campaign events. Each entry: Title, Description, In-game date, Real date, Session number, optional image. Details TBD (see open questions below).
+1. **Timeline** — vertical scrollable list of campaign events. Each entry: Title, Description, In-game date, Real date, Session number, Author, optional image.
 2. **Session Scheduling** — calendar view, players mark availability (yes/no/maybe)
 3. **Roles** — GM role vs. Player role (different permissions)
 
-## Open Questions (to resolve before building Timeline)
-- Timeline direction: newest at top or oldest at top?
-- In-game date format: standard D&D calendar or custom?
-- Who can add/edit entries: GM only, or all players?
+## Timeline Decisions
+- **Order**: Newest entry at top
+- **Permissions**: All players can read and edit all entries (no restrictions)
+- **Author field**: Each entry has an author. The selectable authors are loaded dynamically from the user database, filtered to users with the **Player role** only — the GM is excluded. The group uses round-robin protocol writing (a different player each session). Future feature: configurable author order with pre-fill + override.
+- **In-game date format**: The Dark Eye (Das Schwarze Auge) Aventurian calendar — **currently hardcoded, configurable format is a planned future feature**
+
+### The Dark Eye Calendar (Aventurian)
+- 12 months of 30 days each + 5 "Nameless Days" = 365 days/year
+- Months (in order, each named after one of the Twelvegods):
+  1. Praios, 2. Rondra, 3. Efferd, 4. Travia, 5. Boron, 6. Hesinde,
+  7. Firun, 8. Tsa, 9. Phex, 10. Peraine, 11. Ingerimm, 12. Rahja
+- Days per month: 1–30. Nameless Days follow Rahja (end of year).
+- Year format example: "15 Peraine 1040" (day / month name / year)
 
 ## Git & Deployment Workflow
 - **Never commit or push directly to `main`**
