@@ -259,21 +259,7 @@
 }
 
 .form-group select {
-  width: 100%;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid var(--border-gold);
-  border-radius: 2px;
-  padding: 0.65rem 0.9rem;
-  color: var(--text-light);
-  font-family: 'Lora', serif;
-  font-size: 0.95rem;
-  outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.form-group select:focus {
-  border-color: var(--gold);
 }
 
 .form-group select option {
@@ -379,4 +365,84 @@
 
 .ql-snow .ql-picker-label {
   color: var(--text-muted) !important;
+}
+
+/* ── Entry actions (3-dot menu) ──────────────────────────────── */
+
+.entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.entry-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s, background 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.entry-menu-btn:hover {
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.entry-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 110;
+  min-width: 130px;
+  overflow: hidden;
+}
+
+.entry-menu[hidden] {
+  display: none;
+}
+
+.entry-menu-item {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.entry-menu-item:hover {
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--gold);
+}
+
+.entry-menu-item--danger:hover {
+  background: rgba(180, 50, 50, 0.12);
+  color: var(--red-accent);
+}
+
+/* read-only session number in edit modal */
+.session-display {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
 }
