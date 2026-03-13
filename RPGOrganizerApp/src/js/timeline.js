@@ -1,8 +1,8 @@
 import { auth, db } from '/src/js/firebase-config.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
-  collection, addDoc, getDocs,
-  query, orderBy, where, serverTimestamp
+  collection, addDoc, getDocs, doc, updateDoc,
+  query, orderBy, serverTimestamp
 } from 'firebase/firestore';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -13,6 +13,8 @@ let players = [];
 let lastEntryDate = { day: null, month: null, year: null };
 let nextSessionNumber = 1;
 let initialized = false;
+let editingEntryId = null;
+const entriesMap = new Map();
 
 // ── Auth guard ───────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
@@ -41,9 +43,15 @@ function populateDaySelect(selectEl, month) {
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
   document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
-  document.getElementById('newEntryBtn').addEventListener('click', openModal);
+  document.getElementById('newEntryBtn').addEventListener('click', () => openModal());
   document.getElementById('cancelBtn').addEventListener('click', closeModal);
   document.getElementById('entryForm').addEventListener('submit', saveEntry);
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.entry-menu:not([hidden])').forEach(m => {
+      m.hidden = true;
+      m.previousElementSibling.setAttribute('aria-expanded', 'false');
+    });
+  });
 
   // Populate day selects on initial load and on month change
   const inGameMonth = document.getElementById('inGameMonth');
@@ -111,30 +119,36 @@ async function loadTimeline() {
 
   const list = document.getElementById('timelineList');
   list.innerHTML = '';
+  entriesMap.clear();
 
-  if (snapshot.empty) {
+  // Filter out soft-deleted entries client-side
+  const activeDocs = snapshot.docs.filter(d => d.data().deleted !== true);
+
+  if (activeDocs.length === 0) {
     list.innerHTML = '<p class="timeline-empty">Noch keine Einträge vorhanden.</p>';
     nextSessionNumber = 1;
     lastEntryDate = { day: null, month: null, year: null };
     return;
   }
 
-  // Track state from the most recent entry (first in desc order)
-  const latestData = snapshot.docs[0].data();
+  // Track state from the most recent active entry (first in desc order)
+  const latestData = activeDocs[0].data();
   if (latestData.inGameEndMonth) {
     lastEntryDate = { day: latestData.inGameEndDay, month: latestData.inGameEndMonth, year: latestData.inGameEndYear };
   } else {
     lastEntryDate = { day: latestData.inGameDay, month: latestData.inGameMonth, year: latestData.inGameYear };
   }
-  const maxSession = snapshot.docs.reduce((max, d) => Math.max(max, d.data().sessionNumber || 0), 0);
+  const maxSession = activeDocs.reduce((max, d) => Math.max(max, d.data().sessionNumber || 0), 0);
   nextSessionNumber = maxSession + 1;
 
-  snapshot.forEach(doc => {
-    list.appendChild(renderEntry(doc.data()));
+  activeDocs.forEach(d => {
+    const entry = d.data();
+    entriesMap.set(d.id, entry);
+    list.appendChild(renderEntry(d.id, entry));
   });
 }
 
-function renderEntry(entry) {
+function renderEntry(docId, entry) {
   const card = document.createElement('div');
   card.className = 'timeline-entry';
 
@@ -143,47 +157,142 @@ function renderEntry(entry) {
     entry.inGameEndDay, entry.inGameEndMonth, entry.inGameEndYear
   );
   const realDate = formatDate(entry.realDate);
-  const session = entry.sessionNumber ? `Sitzung ${entry.sessionNumber}` : '';
 
+  // Build structure with innerHTML only for trusted, static strings (dates, session label)
+  // User-supplied fields (title, authorName, description) are set via textContent / DOM to avoid XSS
   card.innerHTML = `
     <div class="entry-header">
       <div class="entry-meta">
-        ${session ? `<span class="entry-session">${session}</span>` : ''}
+        ${entry.sessionNumber ? `<span class="entry-session">Sitzung ${entry.sessionNumber}</span>` : ''}
         <span class="entry-dates">${inGameDate}${realDate ? ' · ' + realDate : ''}</span>
       </div>
-      <span class="entry-author" style="color: ${entry.authorColor}">${entry.authorName}</span>
+      <div class="entry-actions">
+        <span class="entry-author"></span>
+        <button class="entry-menu-btn" aria-label="Aktionen" aria-expanded="false">⋯</button>
+        <div class="entry-menu" hidden>
+          <button class="entry-menu-item" data-action="edit">Bearbeiten</button>
+          <button class="entry-menu-item entry-menu-item--danger" data-action="delete">Löschen</button>
+        </div>
+      </div>
     </div>
-    <h3 class="entry-title">${entry.title}</h3>
-    <div class="entry-description ql-editor">${entry.description}</div>
+    <h3 class="entry-title"></h3>
+    <div class="entry-description ql-editor"></div>
   `;
+
+  // Set user-supplied content safely
+  card.querySelector('.entry-author').textContent = entry.authorName;
+  card.querySelector('.entry-author').style.color = entry.authorColor;
+  card.querySelector('.entry-title').textContent = entry.title;
+  card.querySelector('.entry-description').innerHTML = entry.description; // Quill HTML, trusted rich text
+
+  const menuBtn = card.querySelector('.entry-menu-btn');
+  const menu = card.querySelector('.entry-menu');
+
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Close any other open menus
+    document.querySelectorAll('.entry-menu:not([hidden])').forEach(m => {
+      if (m !== menu) {
+        m.hidden = true;
+        m.previousElementSibling.setAttribute('aria-expanded', 'false');
+      }
+    });
+    const opening = menu.hidden;
+    menu.hidden = !opening;
+    menuBtn.setAttribute('aria-expanded', String(opening));
+  });
+
+  card.querySelector('[data-action="edit"]').addEventListener('click', () => {
+    menu.hidden = true;
+    menuBtn.setAttribute('aria-expanded', 'false');
+    openModal(docId, entriesMap.get(docId));
+  });
+
+  card.querySelector('[data-action="delete"]').addEventListener('click', () => {
+    menu.hidden = true;
+    menuBtn.setAttribute('aria-expanded', 'false');
+    deleteEntry(docId, card);
+  });
 
   return card;
 }
 
 // ── Modal ─────────────────────────────────────────────────────
-function openModal() {
+function openModal(docId = null, entry = null) {
+  editingEntryId = docId;
+  const isEdit = docId !== null;
+
   document.getElementById('entryModal').hidden = false;
-  document.getElementById('entryForm').reset();
   document.getElementById('formError').textContent = '';
-  document.getElementById('endDateRow').hidden = true;
-  quill.setContents([]);
 
-  // Pre-fill in-game date from last entry
-  if (lastEntryDate.month) {
-    document.getElementById('inGameMonth').value = lastEntryDate.month;
-    populateDaySelect(document.getElementById('inGameDay'), lastEntryDate.month);
-    document.getElementById('inGameDay').value = lastEntryDate.day ?? '';
-    document.getElementById('inGameYear').value = lastEntryDate.year ?? '';
+  document.getElementById('modalTitle').textContent = isEdit ? 'Eintrag bearbeiten' : 'Neuer Eintrag';
+
+  const sessionDisplay = document.getElementById('sessionNumberDisplay');
+
+  if (isEdit && entry) {
+    // Pre-fill all fields from the existing entry
+    document.getElementById('entryTitle').value = entry.title;
+
+    document.getElementById('inGameMonth').value = entry.inGameMonth;
+    populateDaySelect(document.getElementById('inGameDay'), entry.inGameMonth);
+    document.getElementById('inGameDay').value = entry.inGameDay ?? '';
+    document.getElementById('inGameYear').value = entry.inGameYear ?? '';
+
+    const isMultiDay = !!entry.inGameEndMonth;
+    document.getElementById('isMultiDay').checked = isMultiDay;
+    document.getElementById('endDateRow').hidden = !isMultiDay;
+    if (isMultiDay) {
+      document.getElementById('inGameEndMonth').value = entry.inGameEndMonth;
+      populateDaySelect(document.getElementById('inGameEndDay'), entry.inGameEndMonth);
+      document.getElementById('inGameEndDay').value = entry.inGameEndDay ?? '';
+      document.getElementById('inGameEndYear').value = entry.inGameEndYear ?? '';
+    }
+
+    document.getElementById('realDate').value = entry.realDate ?? '';
+    document.getElementById('authorSelect').value = entry.authorId;
+
+    sessionDisplay.textContent = entry.sessionNumber ? `Sitzung ${entry.sessionNumber}` : '';
+    sessionDisplay.hidden = !entry.sessionNumber;
+
+    quill.root.innerHTML = entry.description || '';
   } else {
-    populateDaySelect(document.getElementById('inGameDay'), document.getElementById('inGameMonth').value);
-  }
+    // Create mode — reset form, pre-fill sensible defaults
+    document.getElementById('entryForm').reset();
+    document.getElementById('endDateRow').hidden = true;
+    sessionDisplay.hidden = true;
+    quill.setContents([]);
 
-  // Pre-fill real date with today
-  document.getElementById('realDate').value = new Date().toISOString().split('T')[0];
+    if (lastEntryDate.month) {
+      document.getElementById('inGameMonth').value = lastEntryDate.month;
+      populateDaySelect(document.getElementById('inGameDay'), lastEntryDate.month);
+      document.getElementById('inGameDay').value = lastEntryDate.day ?? '';
+      document.getElementById('inGameYear').value = lastEntryDate.year ?? '';
+    } else {
+      populateDaySelect(document.getElementById('inGameDay'), document.getElementById('inGameMonth').value);
+    }
+
+    document.getElementById('realDate').value = new Date().toISOString().split('T')[0];
+  }
 }
 
 function closeModal() {
   document.getElementById('entryModal').hidden = true;
+  editingEntryId = null;
+}
+
+// ── Delete entry (soft) ───────────────────────────────────────
+async function deleteEntry(docId, cardEl) {
+  const confirmed = confirm('Eintrag wirklich löschen? Er bleibt in der Datenbank gespeichert und kann bei Bedarf wiederhergestellt werden.');
+  if (!confirmed) return;
+
+  try {
+    await updateDoc(doc(db, 'timeline', docId), { deleted: true });
+    entriesMap.delete(docId);
+    cardEl.remove();
+  } catch (err) {
+    alert('Fehler beim Löschen. Bitte erneut versuchen.');
+    console.error(err);
+  }
 }
 
 // ── Save entry ────────────────────────────────────────────────
@@ -196,7 +305,7 @@ async function saveEntry(e) {
 
   const isMultiDay = document.getElementById('isMultiDay').checked;
 
-  const entry = {
+  const fields = {
     title: document.getElementById('entryTitle').value.trim(),
     description: quill.root.innerHTML,
     inGameDay: parseInt(document.getElementById('inGameDay').value) || null,
@@ -206,15 +315,23 @@ async function saveEntry(e) {
     inGameEndMonth: isMultiDay ? document.getElementById('inGameEndMonth').value : null,
     inGameEndYear: isMultiDay ? (parseInt(document.getElementById('inGameEndYear').value) || null) : null,
     realDate: document.getElementById('realDate').value || null,
-    sessionNumber: nextSessionNumber,
     authorId: author.id,
     authorName: author.characterShortName,
     authorColor: author.color,
-    createdAt: serverTimestamp(),
+    lastModifiedAt: serverTimestamp(),
   };
 
   try {
-    await addDoc(collection(db, 'timeline'), entry);
+    if (editingEntryId) {
+      await updateDoc(doc(db, 'timeline', editingEntryId), fields);
+    } else {
+      await addDoc(collection(db, 'timeline'), {
+        ...fields,
+        sessionNumber: nextSessionNumber,
+        deleted: false,
+        createdAt: serverTimestamp(),
+      });
+    }
     closeModal();
     await loadTimeline();
   } catch (err) {

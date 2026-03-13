@@ -35,7 +35,7 @@
   <!-- Modal: Neuer Eintrag -->
   <div class="modal-overlay" id="entryModal" hidden>
     <div class="modal-card">
-      <h2 class="modal-title">Neuer Eintrag</h2>
+      <h2 class="modal-title" id="modalTitle">Neuer Eintrag</h2>
 
       <form id="entryForm">
 
@@ -122,6 +122,7 @@
           <select id="authorSelect" required></select>
         </div>
 
+        <p class="session-display" id="sessionNumberDisplay" hidden></p>
         <p class="error-msg" id="formError"></p>
 
         <div class="form-actions">
