@@ -164,6 +164,8 @@ function subscribeToTimeline() {
       entriesMap.set(d.id, entry);
       list.appendChild(renderEntry(d.id, entry));
     });
+  }, (err) => {
+    console.error('Timeline listener error:', err);
   });
 }
 
@@ -350,7 +352,7 @@ function commitPendingDelete() {
 // ── Delete entry (soft) ───────────────────────────────────────
 function deleteEntry(docId, cardEl, entryData) {
   // Guard: entryData may be undefined if the entriesMap was cleared by a concurrent
-  // loadTimeline() call between render and click. In that case do nothing.
+  // onSnapshot re-render between render and click. In that case do nothing.
   if (!entryData) return;
 
   // If another deletion is pending, commit it immediately before starting a new one.
