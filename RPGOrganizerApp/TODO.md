@@ -29,9 +29,10 @@
 - [x] **Timeline: Einträge löschen** — soft delete via 3-dot menu; deleted: true in Firestore, filtered client-side
 - [x] **Timeline: Edit entries** — 3-dot menu opens pre-filled modal; updateDoc on save; session number read-only
 - [ ] **Timeline: Sortierung** — default sort is by real-life date; add a toggle/setting to switch to in-game (Aventurian) date order instead (useful when a session is played later but set earlier in the story)
-- [ ] **Timeline: Real-time updates** — changes made by one user are reflected live for all other users without a page reload (Firestore `onSnapshot`)
+- [x] **Timeline: Real-time updates** — onSnapshot listener replaces getDocs; all users see new/edited/deleted entries live; pending-delete undo window preserved
 - [x] **Timeline: Delete UX improvement** — snackbar with 5s undo window replaces confirm(); gold countdown bar; Firestore write deferred; concurrent deletes handled
 - [ ] **Timeline: Concurrent edit protection** — prevent two users from accidentally overwriting each other's changes; options: (a) optimistic locking with conflict detection, or (b) live presence/lock indicator when someone is editing. Could explore Firestore-based session locking or a collaborative editing approach.
+- [ ] **Timeline: Auto-save / draft recovery** — periodically save form state to localStorage so that if the browser crashes or the tab closes mid-edit, the user can recover their unsaved changes on next open
 - [ ] **Timeline: Export** — export the full timeline or a selected subset of entries as a JSON file
 - [ ] **Timeline: Version history** — keep a history of changes per entry so past versions can be viewed or restored
 - [ ] Build Session Scheduling view
