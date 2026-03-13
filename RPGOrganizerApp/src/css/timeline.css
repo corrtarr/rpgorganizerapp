@@ -446,3 +446,69 @@
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
+
+/* ── Snackbar ─────────────────────────────────────────────── */
+
+#snackbar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.1rem;
+  z-index: 300;
+  min-width: 260px;
+  overflow: hidden;
+}
+
+#snackbar[hidden] {
+  display: none;
+}
+
+#snackbarMsg {
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+  flex: 1;
+}
+
+#snackbarUndo {
+  background: none;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+#snackbarUndo:hover {
+  color: var(--gold-light);
+}
+
+#snackbarProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--gold);
+  transform-origin: left;
+  animation: snackbar-countdown 5s linear forwards;
+}
+
+@keyframes snackbar-countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
