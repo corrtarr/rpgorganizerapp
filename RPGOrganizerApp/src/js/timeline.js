@@ -269,6 +269,7 @@ function renderEntry(docId, entry) {
 function openModal(docId = null, entry = null) {
   editingEntryId = docId;
   const isEdit = docId !== null;
+  const uploadError = document.getElementById('uploadError');
 
   document.getElementById('entryModal').hidden = false;
   document.getElementById('formError').textContent = '';
@@ -278,6 +279,13 @@ function openModal(docId = null, entry = null) {
   const sessionDisplay = document.getElementById('sessionNumberDisplay');
 
   if (isEdit && entry) {
+    pendingEntryRef = null;
+    pendingImageUrls = [];
+    pendingRange = null;
+    document.querySelector('.btn-submit').disabled = false;
+    uploadError.textContent = '';
+    uploadError.hidden = true;
+
     // Pre-fill all fields from the existing entry
     document.getElementById('entryTitle').value = entry.title;
 
@@ -304,6 +312,13 @@ function openModal(docId = null, entry = null) {
 
     quill.root.innerHTML = entry.description || '';
   } else {
+    pendingEntryRef = doc(collection(db, 'timeline'));
+    pendingImageUrls = [];
+    pendingRange = null;
+    document.querySelector('.btn-submit').disabled = false;
+    uploadError.textContent = '';
+    uploadError.hidden = true;
+
     // Create mode — reset form, pre-fill sensible defaults
     document.getElementById('entryForm').reset();
     document.getElementById('endDateRow').hidden = true;
