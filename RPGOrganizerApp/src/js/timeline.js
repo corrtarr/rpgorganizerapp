@@ -14,6 +14,7 @@ let lastEntryDate = { day: null, month: null, year: null };
 let nextSessionNumber = 1;
 let initialized = false;
 let editingEntryId = null;
+let pendingDelete = null;
 const entriesMap = new Map();
 
 // ── Auth guard ───────────────────────────────────────────────
@@ -211,7 +212,7 @@ function renderEntry(docId, entry) {
   card.querySelector('[data-action="delete"]').addEventListener('click', () => {
     menu.hidden = true;
     menuBtn.setAttribute('aria-expanded', 'false');
-    deleteEntry(docId, card);
+    deleteEntry(docId, card, entriesMap.get(docId));
   });
 
   return card;
@@ -280,19 +281,91 @@ function closeModal() {
   editingEntryId = null;
 }
 
-// ── Delete entry (soft) ───────────────────────────────────────
-async function deleteEntry(docId, cardEl) {
-  const confirmed = confirm('Eintrag wirklich löschen? Er bleibt in der Datenbank gespeichert und kann bei Bedarf wiederhergestellt werden.');
-  if (!confirmed) return;
+// ── Snackbar helpers ──────────────────────────────────────────
+function showSnackbar(message, undoCallback) {
+  document.getElementById('snackbarMsg').textContent = message;
 
-  try {
-    await updateDoc(doc(db, 'timeline', docId), { deleted: true });
-    entriesMap.delete(docId);
-    cardEl.remove();
-  } catch (err) {
-    alert('Fehler beim Löschen. Bitte erneut versuchen.');
-    console.error(err);
-  }
+  const undoBtn = document.getElementById('snackbarUndo');
+  undoBtn.hidden = undoCallback === null;
+  undoBtn.onclick = undoCallback;
+
+  // Reset progress bar animation by replacing the element (forces reflow).
+  // Always re-query by ID afterwards — never cache a reference to snackbarProgress.
+  const oldProg = document.getElementById('snackbarProgress');
+  const newProg = oldProg.cloneNode(false);
+  oldProg.replaceWith(newProg);
+
+  document.getElementById('snackbar').hidden = false;
+}
+
+function hideSnackbar() {
+  document.getElementById('snackbar').hidden = true;
+}
+
+function commitPendingDelete() {
+  if (!pendingDelete) return;
+  clearTimeout(pendingDelete.timer);
+  const { docId } = pendingDelete;
+  pendingDelete = null;
+  hideSnackbar();
+  // Fire-and-forget. If this fails the entry will reappear on the next loadTimeline().
+  updateDoc(doc(db, 'timeline', docId), { deleted: true }).catch(err => {
+    console.error('Background delete failed:', err);
+  });
+}
+
+// ── Delete entry (soft) ───────────────────────────────────────
+function deleteEntry(docId, cardEl, entryData) {
+  // Guard: entryData may be undefined if the entriesMap was cleared by a concurrent
+  // loadTimeline() call between render and click. In that case do nothing.
+  if (!entryData) return;
+
+  // If another deletion is pending, commit it immediately before starting a new one.
+  // commitPendingDelete() is fire-and-forget: the Firestore write for the first entry
+  // is dispatched in the background. This is intentional — see spec §5 concurrent delete.
+  commitPendingDelete();
+
+  // Capture DOM position so undo AND error recovery can restore the card in its
+  // original sorted position (not at the bottom of the list).
+  const cardParent = cardEl.parentNode;
+  const cardNextSibling = cardEl.nextSibling; // null if card was the last item
+
+  // Optimistic remove from DOM and map.
+  entriesMap.delete(docId);
+  cardEl.remove();
+
+  // Schedule the actual Firestore write after 5 seconds.
+  const timer = setTimeout(async () => {
+    pendingDelete = null;
+    hideSnackbar();
+    try {
+      await updateDoc(doc(db, 'timeline', docId), { deleted: true });
+    } catch (err) {
+      console.error(err);
+      // Restore on failure: put the card and map entry back.
+      entriesMap.set(docId, entryData);
+      if (document.contains(cardParent)) {
+        cardParent.insertBefore(cardEl, cardNextSibling);
+      }
+      showSnackbar('Fehler beim Löschen. Bitte erneut versuchen.', null);
+    }
+  }, 5000);
+
+  pendingDelete = { timer, docId, entryData, cardEl, cardParent, cardNextSibling };
+
+  showSnackbar('Eintrag gelöscht', () => {
+    // Undo — pendingDelete is guaranteed non-null here.
+    clearTimeout(pendingDelete.timer);
+    pendingDelete = null;
+    entriesMap.set(docId, entryData);
+    if (document.contains(cardParent)) {
+      cardParent.insertBefore(cardEl, cardNextSibling);
+    }
+    // If cardParent is no longer in the DOM (e.g. timeline was reloaded during the 5s
+    // window), DOM restore is skipped. entriesMap is restored so loadTimeline() will
+    // render the entry on the next call.
+    hideSnackbar();
+  });
 }
 
 // ── Save entry ────────────────────────────────────────────────
