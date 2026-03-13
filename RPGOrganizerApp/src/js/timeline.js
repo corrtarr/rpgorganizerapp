@@ -2,7 +2,7 @@ import { auth, db } from '/src/js/firebase-config.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   collection, addDoc, getDocs, doc, updateDoc,
-  query, orderBy, where, serverTimestamp
+  query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -15,6 +15,7 @@ let nextSessionNumber = 1;
 let initialized = false;
 let editingEntryId = null;
 let pendingDelete = null;
+let timelineUnsubscribe = null;
 const entriesMap = new Map();
 
 // ── Auth guard ───────────────────────────────────────────────
@@ -43,7 +44,10 @@ function populateDaySelect(selectEl, month) {
 
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
-  document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (timelineUnsubscribe) timelineUnsubscribe();
+    signOut(auth);
+  });
   document.getElementById('newEntryBtn').addEventListener('click', () => openModal());
   document.getElementById('cancelBtn').addEventListener('click', closeModal);
   document.getElementById('entryForm').addEventListener('submit', saveEntry);
@@ -94,7 +98,8 @@ async function init() {
     }
   });
 
-  await Promise.all([loadPlayers(), loadTimeline()]);
+  await loadPlayers();
+  subscribeToTimeline();
 }
 
 // ── Load players (for author dropdown) ───────────────────────
@@ -113,39 +118,67 @@ async function loadPlayers() {
   });
 }
 
-// ── Load and render timeline ──────────────────────────────────
-async function loadTimeline() {
-  const q = query(collection(db, 'timeline'), orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
+// ── Subscribe to timeline (real-time) ────────────────────────
+function subscribeToTimeline() {
+  // Guard against accidental double-call: unsubscribe any existing listener first.
+  if (timelineUnsubscribe) {
+    timelineUnsubscribe();
+    timelineUnsubscribe = null;
+  }
 
+  const q = query(collection(db, 'timeline'), orderBy('createdAt', 'desc'));
+
+  timelineUnsubscribe = onSnapshot(q, (snapshot) => {
+    const list = document.getElementById('timelineList');
+    list.innerHTML = '';
+    entriesMap.clear();
+
+    // Filter out soft-deleted entries and the entry currently pending deletion.
+    // The pending-delete entry has already been removed from the DOM optimistically;
+    // if the snapshot fires during the 5s undo window we must not re-render it.
+    const activeDocs = snapshot.docs.filter(d => {
+      if (d.data().deleted === true) return false;
+      if (pendingDelete && d.id === pendingDelete.docId) return false;
+      return true;
+    });
+
+    if (activeDocs.length === 0) {
+      list.innerHTML = '<p class="timeline-empty">Noch keine Einträge vorhanden.</p>';
+      nextSessionNumber = 1;
+      lastEntryDate = { day: null, month: null, year: null };
+      return;
+    }
+
+    // Track state from the most recent active entry (first in desc order)
+    const latestData = activeDocs[0].data();
+    if (latestData.inGameEndMonth) {
+      lastEntryDate = { day: latestData.inGameEndDay, month: latestData.inGameEndMonth, year: latestData.inGameEndYear };
+    } else {
+      lastEntryDate = { day: latestData.inGameDay, month: latestData.inGameMonth, year: latestData.inGameYear };
+    }
+    const maxSession = activeDocs.reduce((max, d) => Math.max(max, d.data().sessionNumber || 0), 0);
+    nextSessionNumber = maxSession + 1;
+
+    activeDocs.forEach(d => {
+      const entry = d.data();
+      entriesMap.set(d.id, entry);
+      list.appendChild(renderEntry(d.id, entry));
+    });
+  });
+}
+
+// ── Re-render timeline from entriesMap ────────────────────────
+// Used when the DOM has been wiped by a snapshot re-render during the
+// undo window. entriesMap is the source of truth in that case.
+function renderFromEntriesMap() {
   const list = document.getElementById('timelineList');
   list.innerHTML = '';
-  entriesMap.clear();
-
-  // Filter out soft-deleted entries client-side
-  const activeDocs = snapshot.docs.filter(d => d.data().deleted !== true);
-
-  if (activeDocs.length === 0) {
+  if (entriesMap.size === 0) {
     list.innerHTML = '<p class="timeline-empty">Noch keine Einträge vorhanden.</p>';
-    nextSessionNumber = 1;
-    lastEntryDate = { day: null, month: null, year: null };
     return;
   }
-
-  // Track state from the most recent active entry (first in desc order)
-  const latestData = activeDocs[0].data();
-  if (latestData.inGameEndMonth) {
-    lastEntryDate = { day: latestData.inGameEndDay, month: latestData.inGameEndMonth, year: latestData.inGameEndYear };
-  } else {
-    lastEntryDate = { day: latestData.inGameDay, month: latestData.inGameMonth, year: latestData.inGameYear };
-  }
-  const maxSession = activeDocs.reduce((max, d) => Math.max(max, d.data().sessionNumber || 0), 0);
-  nextSessionNumber = maxSession + 1;
-
-  activeDocs.forEach(d => {
-    const entry = d.data();
-    entriesMap.set(d.id, entry);
-    list.appendChild(renderEntry(d.id, entry));
+  entriesMap.forEach((entry, docId) => {
+    list.appendChild(renderEntry(docId, entry));
   });
 }
 
@@ -308,7 +341,7 @@ function commitPendingDelete() {
   const { docId } = pendingDelete;
   pendingDelete = null;
   hideSnackbar();
-  // Fire-and-forget. If this fails the entry will reappear on the next loadTimeline().
+  // Fire-and-forget. If this fails the entry will reappear via the onSnapshot listener.
   updateDoc(doc(db, 'timeline', docId), { deleted: true }).catch(err => {
     console.error('Background delete failed:', err);
   });
@@ -346,6 +379,8 @@ function deleteEntry(docId, cardEl, entryData) {
       entriesMap.set(docId, entryData);
       if (document.contains(cardParent)) {
         cardParent.insertBefore(cardEl, cardNextSibling);
+      } else {
+        renderFromEntriesMap();
       }
       showSnackbar('Fehler beim Löschen. Bitte erneut versuchen.', null);
     }
@@ -360,10 +395,11 @@ function deleteEntry(docId, cardEl, entryData) {
     entriesMap.set(docId, entryData);
     if (document.contains(cardParent)) {
       cardParent.insertBefore(cardEl, cardNextSibling);
+    } else {
+      // cardParent was detached by a snapshot re-render during the undo window.
+      // Force a full re-render from entriesMap so the restored entry becomes visible.
+      renderFromEntriesMap();
     }
-    // If cardParent is no longer in the DOM (e.g. timeline was reloaded during the 5s
-    // window), DOM restore is skipped. entriesMap is restored so loadTimeline() will
-    // render the entry on the next call.
     hideSnackbar();
   });
 }
@@ -406,7 +442,6 @@ async function saveEntry(e) {
       });
     }
     closeModal();
-    await loadTimeline();
   } catch (err) {
     document.getElementById('formError').textContent = 'Fehler beim Speichern. Bitte erneut versuchen.';
     console.error(err);
