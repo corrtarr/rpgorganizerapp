@@ -17,6 +17,10 @@ let editingEntryId = null;
 let pendingDelete = null;
 let timelineUnsubscribe = null;
 const entriesMap = new Map();
+let pendingImageUrls = [];   // URLs uploaded in the current editing session
+let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
+let pendingRange     = null; // Quill selection range saved before file picker opens
+let isUploading      = false;
 
 // ── Auth guard ───────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
@@ -93,14 +97,22 @@ async function init() {
       toolbar: [
         ['bold', 'italic', 'underline'],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'clean']
+        ['blockquote', 'clean'],
+        ['image']
       ]
     }
   });
 
+  quill.getModule('toolbar').addHandler('image', handleImageUpload);
+  document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
+
   await loadPlayers();
   subscribeToTimeline();
 }
+
+// ── Image upload stubs (filled in Task 6) ────────────────────
+function handleImageUpload() {}
+function onImageFileSelected() {}
 
 // ── Load players (for author dropdown) ───────────────────────
 async function loadPlayers() {
