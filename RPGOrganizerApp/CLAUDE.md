@@ -81,6 +81,18 @@ These files are git-ignored and must never be committed.
   `--bg-dark`, `--bg-card`, `--border-gold`, `--gold`, `--gold-light`, `--text-light`, `--text-muted`, `--red-accent`, `--error`
 - User feedback: currently slightly too dark — a design pass is planned
 
+### CSS `hidden` attribute + `display` pitfall
+Any element that uses the HTML `hidden` attribute for show/hide toggling **must** have a `[hidden] { display: none; }` rule in CSS if its selector also sets an explicit `display` value (e.g. `display: flex`). Without it, the CSS `display` wins over the `hidden` attribute and the element is always visible. Pattern to always follow:
+```css
+#myElement {
+  display: flex; /* used when visible */
+}
+#myElement[hidden] {
+  display: none; /* must override when hidden */
+}
+```
+This has already bitten us on `.modal-overlay` and `#lightbox`.
+
 ## Language
 - **UI language: German** — all labels, buttons, headings, and user-facing text must be written in German
 - Future TODO: add multilingual support (German + English) once the app is stable
