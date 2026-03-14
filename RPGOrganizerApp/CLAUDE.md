@@ -116,6 +116,20 @@ This has already bitten us on `.modal-overlay` and `#lightbox`.
 - Days per month: 1–30. Nameless Days follow Rahja (end of year).
 - Year format example: "15 Peraine 1040" (day / month name / year)
 
+## Testing
+
+For each finished feature, a smoke test document must be created at:
+```
+docs/tests/smoke/YYYY-MM-DD-<feature-name>.md
+```
+Use `docs/tests/smoke/2026-03-14-timeline-image-support.md` as the reference template. The document covers:
+- Prerequisites
+- One test case per distinct user-facing behaviour
+- Each test case has: Steps, Expected result, Result field (filled in manually by tester)
+- A Notes section with hints for future automation (relevant DOM selectors, emulator suggestions)
+
+The `docs/` folder is git-ignored — these documents are local only.
+
 ## Git & Deployment Workflow
 - **Never commit or push directly to `main`**
 - Work on feature branches (e.g. `feature/timeline`, `feature/scheduling`)
