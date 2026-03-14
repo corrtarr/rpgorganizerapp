@@ -19,6 +19,7 @@ let pendingDelete = null;
 let timelineUnsubscribe = null;
 const entriesMap = new Map();
 let pendingImageUrls = [];   // URLs uploaded in the current editing session
+let pendingImagePaths = []; // storage paths for orphan cleanup
 let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
 let pendingRange     = null; // Quill selection range saved before file picker opens
 let isUploading      = false;
@@ -144,6 +145,7 @@ async function onImageFileSelected(event) {
     const url = await getDownloadURL(storageRef);
     quill.insertEmbed(pendingRange.index, 'image', url);
     pendingImageUrls.push(url);
+    pendingImagePaths.push(path);
   } catch (err) {
     console.error('Image upload failed:', err);
     uploadError.textContent = 'Bild konnte nicht hochgeladen werden. Bitte erneut versuchen.';
@@ -322,6 +324,7 @@ function openModal(docId = null, entry = null) {
   if (isEdit && entry) {
     pendingEntryRef = null;
     pendingImageUrls = [];
+    pendingImagePaths = [];
     pendingRange = null;
     document.querySelector('.btn-submit').disabled = false;
     uploadError.textContent = '';
@@ -355,6 +358,7 @@ function openModal(docId = null, entry = null) {
   } else {
     pendingEntryRef = doc(collection(db, 'timeline'));
     pendingImageUrls = [];
+    pendingImagePaths = [];
     pendingRange = null;
     document.querySelector('.btn-submit').disabled = false;
     uploadError.textContent = '';
@@ -379,7 +383,21 @@ function openModal(docId = null, entry = null) {
   }
 }
 
-function closeModal() {
+async function closeModal() {
+  if (pendingImagePaths.length > 0) {
+    const pathsToDelete = [...pendingImagePaths];
+    pendingImagePaths = [];
+    for (const storagePath of pathsToDelete) {
+      try {
+        await deleteObject(ref(storage, storagePath));
+      } catch (e) {
+        console.warn('Could not delete orphan image:', storagePath, e);
+      }
+    }
+  }
+  pendingImageUrls = [];
+  pendingEntryRef = null;
+  pendingRange = null;
   document.getElementById('entryModal').hidden = true;
   editingEntryId = null;
 }
