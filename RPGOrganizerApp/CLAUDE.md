@@ -5,6 +5,15 @@
 - Branch protection on `main`: require PR + 1 approval before merging
 - GitHub Personal Access Token expires: **April 7, 2026** — generate a new one at github.com → Settings → Developer settings → Personal access tokens
 
+## Data Schema
+
+Full Firestore schema (collections, fields, types, descriptions) is documented in:
+`docs/data-schema.md`
+
+Always consult this file when working with Firestore data or rendering entry/user fields.
+
+---
+
 ## What this project is
 A private, password-protected web app for a tabletop RPG group. It helps the group
 track their campaign history, schedule sessions, and manage group info.
