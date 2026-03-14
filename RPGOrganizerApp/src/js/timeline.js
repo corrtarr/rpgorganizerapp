@@ -140,16 +140,15 @@ async function onImageFileSelected(event) {
   }
 
   const entryId = pendingEntryRef !== null ? pendingEntryRef.id : editingEntryId;
+  const file = event.target.files[0];
+  event.target.value = '';
+
   isUploading = true;
   document.querySelector('.ql-image').disabled = true;
   document.querySelector('.btn-submit').disabled = true;
   const uploadError = document.getElementById('uploadError');
   uploadError.textContent = '';
   uploadError.hidden = true;
-  event.target.value = '';
-
-  const file = event.target.files[0];
-  event.target.value = '';
 
   const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[file.type] ?? 'bin';
   const path = `timeline/${entryId}/${crypto.randomUUID()}.${ext}`;
