@@ -2,7 +2,7 @@ import { auth, db, storage } from '/src/js/firebase-config.js';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
-  collection, addDoc, setDoc, getDocs, doc, updateDoc,
+  collection, setDoc, getDocs, doc, updateDoc,
   query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import Quill from 'quill';
