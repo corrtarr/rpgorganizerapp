@@ -310,8 +310,10 @@ function renderEntry(docId, entry) {
   `;
 
   // Set user-supplied content safely
-  card.querySelector('.entry-author').textContent = entry.authorName;
-  card.querySelector('.entry-author').style.color = entry.authorColor;
+  const authorEl = card.querySelector('.entry-author');
+  authorEl.textContent = entry.authorName;
+  const authorPlayer = players.find(p => p.id === entry.authorId);
+  if (authorPlayer) authorEl.style.color = authorPlayer.color;
   card.querySelector('.entry-title').textContent = entry.title;
   card.querySelector('.entry-description').innerHTML = entry.description; // Quill HTML, trusted rich text
 
@@ -610,7 +612,6 @@ async function saveEntry(e) {
     realDate: document.getElementById('realDate').value || null,
     authorId: author.id,
     authorName: author.characterShortName,
-    authorColor: author.color,
     lastModifiedAt: serverTimestamp(),
   };
 
