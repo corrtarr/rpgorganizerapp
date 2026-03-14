@@ -31,6 +31,8 @@
 - [ ] **Timeline: Sortierung** — default sort is by real-life date; add a toggle/setting to switch to in-game (Aventurian) date order instead (useful when a session is played later but set earlier in the story)
 - [x] **Timeline: Real-time updates** — onSnapshot listener replaces getDocs; all users see new/edited/deleted entries live; pending-delete undo window preserved
 - [x] **Timeline: Delete UX improvement** — snackbar with 5s undo window replaces confirm(); gold countdown bar; Firestore write deferred; concurrent deletes handled
+- [ ] **Timeline: Editor enhancements** — add text alignment (left, center, right) and indent controls to the Quill toolbar to support poems and special formatting; needed before import
+- [ ] **Timeline: Import from Google Doc** — one-time import of past campaign entries from the Google Doc; in-game dates are missing and must be filled in manually per entry after import; editor enhancements must be done first
 - [ ] **Timeline: Concurrent edit protection** — prevent two users from accidentally overwriting each other's changes; options: (a) optimistic locking with conflict detection, or (b) live presence/lock indicator when someone is editing. Could explore Firestore-based session locking or a collaborative editing approach.
 - [ ] **Timeline: Auto-save / draft recovery** — periodically save form state to localStorage so that if the browser crashes or the tab closes mid-edit, the user can recover their unsaved changes on next open
 - [ ] **Timeline: Export** — export the full timeline or a selected subset of entries as a JSON file

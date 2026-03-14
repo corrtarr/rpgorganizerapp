@@ -48,6 +48,13 @@ function populateDaySelect(selectEl, month) {
   if (current && current <= max) selectEl.value = current;
 }
 
+// ── Custom blots ──────────────────────────────────────────────
+const BlockEmbed = Quill.import('blots/block/embed');
+class DividerBlot extends BlockEmbed {}
+DividerBlot.blotName = 'divider';
+DividerBlot.tagName = 'hr';
+Quill.register({ 'formats/divider': DividerBlot });
+
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -97,15 +104,24 @@ async function init() {
     placeholder: 'Beschreibung des Ereignisses...',
     modules: {
       toolbar: [
+        [{ header: [1, 2, 3, false] }],
         ['bold', 'italic', 'underline'],
+        [{ align: [] }],  // empty array = full default set (left/center/right/justify)
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'clean'],
-        ['image']
+        [{ indent: '-1' }, { indent: '+1' }],
+        ['blockquote', 'divider'],
+        ['image'],
+        ['clean']
       ]
     }
   });
 
   quill.getModule('toolbar').addHandler('image', handleImageUpload);
+  quill.getModule('toolbar').addHandler('divider', () => {
+    const range = quill.getSelection(true) ?? { index: quill.getLength(), length: 0 };
+    quill.insertEmbed(range.index, 'divider', true, Quill.sources.USER);
+    quill.setSelection(range.index + 1, Quill.sources.SILENT);
+  });
   document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
 
   // Lightbox: open when clicking an image in the timeline
