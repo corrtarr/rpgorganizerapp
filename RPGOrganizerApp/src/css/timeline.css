@@ -536,6 +536,10 @@
   cursor: zoom-out;
 }
 
+#lightbox[hidden] {
+  display: none;
+}
+
 #lightboxImg {
   max-width: 90vw;
   max-height: 90vh;
