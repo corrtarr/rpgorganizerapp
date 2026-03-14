@@ -81,6 +81,18 @@ These files are git-ignored and must never be committed.
   `--bg-dark`, `--bg-card`, `--border-gold`, `--gold`, `--gold-light`, `--text-light`, `--text-muted`, `--red-accent`, `--error`
 - User feedback: currently slightly too dark — a design pass is planned
 
+### CSS `hidden` attribute + `display` pitfall
+Any element that uses the HTML `hidden` attribute for show/hide toggling **must** have a `[hidden] { display: none; }` rule in CSS if its selector also sets an explicit `display` value (e.g. `display: flex`). Without it, the CSS `display` wins over the `hidden` attribute and the element is always visible. Pattern to always follow:
+```css
+#myElement {
+  display: flex; /* used when visible */
+}
+#myElement[hidden] {
+  display: none; /* must override when hidden */
+}
+```
+This has already bitten us on `.modal-overlay` and `#lightbox`.
+
 ## Language
 - **UI language: German** — all labels, buttons, headings, and user-facing text must be written in German
 - Future TODO: add multilingual support (German + English) once the app is stable
@@ -103,6 +115,20 @@ These files are git-ignored and must never be committed.
   7. Firun, 8. Tsa, 9. Phex, 10. Peraine, 11. Ingerimm, 12. Rahja
 - Days per month: 1–30. Nameless Days follow Rahja (end of year).
 - Year format example: "15 Peraine 1040" (day / month name / year)
+
+## Testing
+
+For each finished feature, a smoke test document must be created at:
+```
+docs/tests/smoke/YYYY-MM-DD-<feature-name>.md
+```
+Use `docs/tests/smoke/2026-03-14-timeline-image-support.md` as the reference template. The document covers:
+- Prerequisites
+- One test case per distinct user-facing behaviour
+- Each test case has: Steps, Expected result, Result field (filled in manually by tester)
+- A Notes section with hints for future automation (relevant DOM selectors, emulator suggestions)
+
+The `docs/` folder is git-ignored — these documents are local only.
 
 ## Git & Deployment Workflow
 - **Never commit or push directly to `main`**

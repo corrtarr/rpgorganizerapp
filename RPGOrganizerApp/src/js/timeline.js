@@ -1,7 +1,8 @@
-import { auth, db } from '/src/js/firebase-config.js';
+import { auth, db, storage } from '/src/js/firebase-config.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
-  collection, addDoc, getDocs, doc, updateDoc,
+  collection, setDoc, getDocs, doc, updateDoc,
   query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import Quill from 'quill';
@@ -17,6 +18,11 @@ let editingEntryId = null;
 let pendingDelete = null;
 let timelineUnsubscribe = null;
 const entriesMap = new Map();
+let pendingImageUrls = [];   // URLs uploaded in the current editing session
+let pendingImagePaths = []; // storage paths for orphan cleanup
+let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
+let pendingRange     = null; // Quill selection range saved before file picker opens
+let isUploading      = false;
 
 // ── Auth guard ───────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
@@ -93,13 +99,76 @@ async function init() {
       toolbar: [
         ['bold', 'italic', 'underline'],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'clean']
+        ['blockquote', 'clean'],
+        ['image']
       ]
     }
   });
 
+  quill.getModule('toolbar').addHandler('image', handleImageUpload);
+  document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
+
+  // Lightbox: open when clicking an image in the timeline
+  document.getElementById('timelineList').addEventListener('click', (e) => {
+    if (e.target.tagName === 'IMG') openLightbox(e.target.src);
+  });
+
+  // Lightbox: close when clicking the overlay
+  document.getElementById('lightbox').addEventListener('click', closeLightbox);
+
+  // Lightbox: close with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
   await loadPlayers();
   subscribeToTimeline();
+}
+
+// ── Image upload ──────────────────────────────────────────────
+function handleImageUpload() {
+  if (isUploading) return;
+  pendingRange = quill.getSelection() ?? { index: quill.getLength(), length: 0 };
+  document.getElementById('imageUploadInput').click();
+}
+
+async function onImageFileSelected(event) {
+  if (event.target.files.length === 0) return;
+  if (pendingEntryRef === null && editingEntryId === null) {
+    console.error('onImageFileSelected: no entry ref or editingEntryId');
+    return;
+  }
+
+  const entryId = pendingEntryRef !== null ? pendingEntryRef.id : editingEntryId;
+  const file = event.target.files[0];
+  event.target.value = '';
+
+  isUploading = true;
+  document.querySelector('.ql-image').disabled = true;
+  document.querySelector('.btn-submit').disabled = true;
+  const uploadError = document.getElementById('uploadError');
+  uploadError.textContent = '';
+  uploadError.hidden = true;
+
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[file.type] ?? 'bin';
+  const path = `timeline/${entryId}/${crypto.randomUUID()}.${ext}`;
+  const storageRef = ref(storage, path);
+
+  try {
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    quill.insertEmbed(pendingRange.index, 'image', url);
+    pendingImageUrls.push(url);
+    pendingImagePaths.push(path);
+  } catch (err) {
+    console.error('Image upload failed:', err);
+    uploadError.textContent = 'Bild konnte nicht hochgeladen werden. Bitte erneut versuchen.';
+    uploadError.hidden = false;
+  } finally {
+    isUploading = false;
+    document.querySelector('.ql-image').disabled = false;
+    document.querySelector('.btn-submit').disabled = false;
+  }
 }
 
 // ── Load players (for author dropdown) ───────────────────────
@@ -257,6 +326,7 @@ function renderEntry(docId, entry) {
 function openModal(docId = null, entry = null) {
   editingEntryId = docId;
   const isEdit = docId !== null;
+  const uploadError = document.getElementById('uploadError');
 
   document.getElementById('entryModal').hidden = false;
   document.getElementById('formError').textContent = '';
@@ -266,6 +336,14 @@ function openModal(docId = null, entry = null) {
   const sessionDisplay = document.getElementById('sessionNumberDisplay');
 
   if (isEdit && entry) {
+    pendingEntryRef = null;
+    pendingImageUrls = [];
+    pendingImagePaths = [];
+    pendingRange = null;
+    document.querySelector('.btn-submit').disabled = false;
+    uploadError.textContent = '';
+    uploadError.hidden = true;
+
     // Pre-fill all fields from the existing entry
     document.getElementById('entryTitle').value = entry.title;
 
@@ -292,6 +370,14 @@ function openModal(docId = null, entry = null) {
 
     quill.root.innerHTML = entry.description || '';
   } else {
+    pendingEntryRef = doc(collection(db, 'timeline'));
+    pendingImageUrls = [];
+    pendingImagePaths = [];
+    pendingRange = null;
+    document.querySelector('.btn-submit').disabled = false;
+    uploadError.textContent = '';
+    uploadError.hidden = true;
+
     // Create mode — reset form, pre-fill sensible defaults
     document.getElementById('entryForm').reset();
     document.getElementById('endDateRow').hidden = true;
@@ -311,7 +397,21 @@ function openModal(docId = null, entry = null) {
   }
 }
 
-function closeModal() {
+async function closeModal() {
+  if (pendingImagePaths.length > 0) {
+    const pathsToDelete = [...pendingImagePaths];
+    pendingImagePaths = [];
+    for (const storagePath of pathsToDelete) {
+      try {
+        await deleteObject(ref(storage, storagePath));
+      } catch (e) {
+        console.warn('Could not delete orphan image:', storagePath, e);
+      }
+    }
+  }
+  pendingImageUrls = [];
+  pendingEntryRef = null;
+  pendingRange = null;
   document.getElementById('entryModal').hidden = true;
   editingEntryId = null;
 }
@@ -406,6 +506,19 @@ function deleteEntry(docId, cardEl, entryData) {
   });
 }
 
+// ── Lightbox ──────────────────────────────────────────────────
+function openLightbox(src) {
+  const lightbox = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  lightbox.hidden = false;
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  lightbox.hidden = true;
+  document.getElementById('lightboxImg').src = '';
+}
+
 // ── Save entry ────────────────────────────────────────────────
 async function saveEntry(e) {
   e.preventDefault();
@@ -434,16 +547,22 @@ async function saveEntry(e) {
 
   try {
     if (editingEntryId) {
-      await updateDoc(doc(db, 'timeline', editingEntryId), fields);
-    } else {
-      await addDoc(collection(db, 'timeline'), {
+      const entry = entriesMap.get(editingEntryId);
+      await updateDoc(doc(db, 'timeline', editingEntryId), {
         ...fields,
+        imageUrls: [...(entry?.imageUrls ?? []), ...pendingImageUrls],
+      });
+    } else {
+      await setDoc(pendingEntryRef, {
+        ...fields,
+        imageUrls: [...pendingImageUrls],
         sessionNumber: nextSessionNumber,
         deleted: false,
         createdAt: serverTimestamp(),
       });
     }
-    closeModal();
+    pendingImagePaths = []; // saved successfully — no orphan cleanup needed
+    await closeModal();
   } catch (err) {
     document.getElementById('formError').textContent = 'Fehler beim Speichern. Bitte erneut versuchen.';
     console.error(err);

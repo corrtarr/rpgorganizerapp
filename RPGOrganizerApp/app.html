@@ -47,6 +47,7 @@
         <div class="form-group">
           <label>Beschreibung</label>
           <div id="quillEditor"></div>
+          <p class="error-msg" id="uploadError" hidden></p>
         </div>
 
         <div class="form-row">
@@ -139,6 +140,12 @@
     <span id="snackbarMsg"></span>
     <button type="button" id="snackbarUndo">Rückgängig</button>
     <div id="snackbarProgress"></div>
+  </div>
+
+  <input type="file" id="imageUploadInput" accept="image/*" style="display:none">
+
+  <div id="lightbox" hidden>
+    <img id="lightboxImg" alt="Bild">
   </div>
 
   <script type="module" src="/src/js/timeline.js"></script>
