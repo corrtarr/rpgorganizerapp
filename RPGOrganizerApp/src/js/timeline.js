@@ -149,6 +149,8 @@ async function onImageFileSelected(event) {
   event.target.value = '';
 
   const file = event.target.files[0];
+  event.target.value = '';
+
   const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[file.type] ?? 'bin';
   const path = `timeline/${entryId}/${crypto.randomUUID()}.${ext}`;
   const storageRef = ref(storage, path);
@@ -560,7 +562,8 @@ async function saveEntry(e) {
         createdAt: serverTimestamp(),
       });
     }
-    closeModal();
+    pendingImagePaths = []; // saved successfully — no orphan cleanup needed
+    await closeModal();
   } catch (err) {
     document.getElementById('formError').textContent = 'Fehler beim Speichern. Bitte erneut versuchen.';
     console.error(err);
