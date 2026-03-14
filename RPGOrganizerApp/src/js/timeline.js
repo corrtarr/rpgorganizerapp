@@ -109,7 +109,7 @@ async function init() {
   document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
 
   // Lightbox: open when clicking an image in the timeline
-  document.getElementById('timeline').addEventListener('click', (e) => {
+  document.getElementById('timelineList').addEventListener('click', (e) => {
     if (e.target.tagName === 'IMG') openLightbox(e.target.src);
   });
 
