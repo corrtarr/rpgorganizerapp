@@ -118,7 +118,7 @@ async function init() {
 
   quill.getModule('toolbar').addHandler('image', handleImageUpload);
   quill.getModule('toolbar').addHandler('divider', () => {
-    const range = quill.getSelection(true);
+    const range = quill.getSelection(true) ?? { index: quill.getLength(), length: 0 };
     quill.insertEmbed(range.index, 'divider', true, Quill.sources.USER);
     quill.setSelection(range.index + 1, Quill.sources.SILENT);
   });
