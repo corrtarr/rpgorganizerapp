@@ -161,11 +161,11 @@
 
 .entry-session {
   font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-muted);
-  background: rgba(139, 105, 20, 0.12);
+  color: var(--gold);
+  background: rgba(139, 105, 20, 0.25);
   border: 1px solid var(--border-gold);
   border-radius: 2px;
   padding: 0.15rem 0.5rem;
@@ -444,8 +444,8 @@
 }
 
 .entry-menu-item--danger:hover {
-  background: rgba(180, 50, 50, 0.12);
-  color: var(--red-accent);
+  background: rgba(180, 50, 50, 0.25);
+  color: var(--error);
 }
 
 /* read-only session number in edit modal */
@@ -656,9 +656,9 @@
 .entry-expand-btn {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--gold);
   font-family: 'Cinzel', serif;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
