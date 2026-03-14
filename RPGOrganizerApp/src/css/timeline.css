@@ -367,6 +367,17 @@
   color: var(--text-muted) !important;
 }
 
+/* ── Quill toolbar — divider button icon ─────────────────── */
+.ql-snow.ql-toolbar button.ql-divider::after {
+  content: '―';
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1;
+}
+.ql-snow.ql-toolbar button.ql-divider:hover::after {
+  color: var(--gold);
+}
+
 /* ── Entry actions (3-dot menu) ──────────────────────────────── */
 
 .entry-actions {
@@ -546,4 +557,35 @@
   object-fit: contain;
   border-radius: 6px;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+/* ── Quill toolbar — header picker dropdown ──────────────── */
+.ql-snow .ql-picker.ql-header .ql-picker-options {
+  background: #1a1509;
+  border-color: var(--border-gold);
+}
+.ql-snow .ql-picker.ql-header .ql-picker-item {
+  color: var(--text-muted);
+}
+.ql-snow .ql-picker.ql-header .ql-picker-item:hover {
+  color: var(--gold);
+}
+
+/* ── Quill editor write view — headers and HR ────────────── */
+#quillEditor h1,
+#quillEditor h2,
+#quillEditor h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-light);
+  font-weight: 600;
+  margin: 0.5rem 0 0.25rem;
+}
+#quillEditor h1 { font-size: 1.2rem; }
+#quillEditor h2 { font-size: 1.05rem; }
+#quillEditor h3 { font-size: 0.95rem; }
+
+#quillEditor hr {
+  border: none;
+  border-top: 1px solid var(--border-gold);
+  margin: 0.75rem 0;
 }
