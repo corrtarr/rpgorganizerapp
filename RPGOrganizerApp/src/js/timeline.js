@@ -2,7 +2,7 @@ import { auth, db, storage } from '/src/js/firebase-config.js';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
-  collection, addDoc, getDocs, doc, updateDoc,
+  collection, addDoc, setDoc, getDocs, doc, updateDoc,
   query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import Quill from 'quill';
@@ -502,10 +502,15 @@ async function saveEntry(e) {
 
   try {
     if (editingEntryId) {
-      await updateDoc(doc(db, 'timeline', editingEntryId), fields);
-    } else {
-      await addDoc(collection(db, 'timeline'), {
+      const entry = entriesMap.get(editingEntryId);
+      await updateDoc(doc(db, 'timeline', editingEntryId), {
         ...fields,
+        imageUrls: [...(entry?.imageUrls ?? []), ...pendingImageUrls],
+      });
+    } else {
+      await setDoc(pendingEntryRef, {
+        ...fields,
+        imageUrls: [...pendingImageUrls],
         sessionNumber: nextSessionNumber,
         deleted: false,
         createdAt: serverTimestamp(),
