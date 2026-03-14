@@ -1,4 +1,5 @@
-import { auth, db } from '/src/js/firebase-config.js';
+import { auth, db, storage } from '/src/js/firebase-config.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   collection, addDoc, getDocs, doc, updateDoc,
@@ -110,9 +111,49 @@ async function init() {
   subscribeToTimeline();
 }
 
-// ── Image upload stubs (filled in Task 6) ────────────────────
-function handleImageUpload() {}
-function onImageFileSelected() {}
+// ── Image upload ──────────────────────────────────────────────
+function handleImageUpload() {
+  if (isUploading) return;
+  pendingRange = quill.getSelection() ?? { index: quill.getLength(), length: 0 };
+  document.getElementById('imageUploadInput').click();
+}
+
+async function onImageFileSelected(event) {
+  if (event.target.files.length === 0) return;
+  if (pendingEntryRef === null && editingEntryId === null) {
+    console.error('onImageFileSelected: no entry ref or editingEntryId');
+    return;
+  }
+
+  const entryId = pendingEntryRef !== null ? pendingEntryRef.id : editingEntryId;
+  isUploading = true;
+  document.querySelector('.ql-image').disabled = true;
+  document.querySelector('.btn-submit').disabled = true;
+  const uploadError = document.getElementById('uploadError');
+  uploadError.textContent = '';
+  uploadError.hidden = true;
+  event.target.value = '';
+
+  const file = event.target.files[0];
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[file.type] ?? 'bin';
+  const path = `timeline/${entryId}/${crypto.randomUUID()}.${ext}`;
+  const storageRef = ref(storage, path);
+
+  try {
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    quill.insertEmbed(pendingRange.index, 'image', url);
+    pendingImageUrls.push(url);
+  } catch (err) {
+    console.error('Image upload failed:', err);
+    uploadError.textContent = 'Bild konnte nicht hochgeladen werden. Bitte erneut versuchen.';
+    uploadError.hidden = false;
+  } finally {
+    isUploading = false;
+    document.querySelector('.ql-image').disabled = false;
+    document.querySelector('.btn-submit').disabled = false;
+  }
+}
 
 // ── Load players (for author dropdown) ───────────────────────
 async function loadPlayers() {
