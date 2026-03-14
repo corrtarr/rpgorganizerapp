@@ -108,6 +108,19 @@ async function init() {
   quill.getModule('toolbar').addHandler('image', handleImageUpload);
   document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
 
+  // Lightbox: open when clicking an image in the timeline
+  document.getElementById('timeline').addEventListener('click', (e) => {
+    if (e.target.tagName === 'IMG') openLightbox(e.target.src);
+  });
+
+  // Lightbox: close when clicking the overlay
+  document.getElementById('lightbox').addEventListener('click', closeLightbox);
+
+  // Lightbox: close with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
   await loadPlayers();
   subscribeToTimeline();
 }
@@ -490,6 +503,19 @@ function deleteEntry(docId, cardEl, entryData) {
     }
     hideSnackbar();
   });
+}
+
+// ── Lightbox ──────────────────────────────────────────────────
+function openLightbox(src) {
+  const lightbox = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  lightbox.hidden = false;
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  lightbox.hidden = true;
+  document.getElementById('lightboxImg').src = '';
 }
 
 // ── Save entry ────────────────────────────────────────────────
