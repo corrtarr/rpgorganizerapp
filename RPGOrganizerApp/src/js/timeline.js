@@ -23,6 +23,7 @@ let pendingImagePaths = []; // storage paths for orphan cleanup
 let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
 let pendingRange     = null; // Quill selection range saved before file picker opens
 let isUploading      = false;
+const expandedEntries = new Set(); // doc IDs expanded this session
 
 // ── Auth guard ───────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
@@ -247,7 +248,9 @@ function subscribeToTimeline() {
     activeDocs.forEach(d => {
       const entry = d.data();
       entriesMap.set(d.id, entry);
-      list.appendChild(renderEntry(d.id, entry));
+      const card = renderEntry(d.id, entry);
+      list.appendChild(card);
+      applyCollapseState(card, d.id);
     });
   }, (err) => {
     console.error('Timeline listener error:', err);
@@ -265,7 +268,9 @@ function renderFromEntriesMap() {
     return;
   }
   entriesMap.forEach((entry, docId) => {
-    list.appendChild(renderEntry(docId, entry));
+    const card = renderEntry(docId, entry);
+    list.appendChild(card);
+    applyCollapseState(card, docId);
   });
 }
 
@@ -297,7 +302,11 @@ function renderEntry(docId, entry) {
       </div>
     </div>
     <h3 class="entry-title"></h3>
-    <div class="entry-description ql-editor"></div>
+    <div class="entry-description-wrapper">
+      <div class="entry-description ql-editor"></div>
+      <div class="entry-description-fade"></div>
+    </div>
+    <button class="entry-expand-btn" type="button"></button>
   `;
 
   // Set user-supplied content safely
@@ -335,7 +344,51 @@ function renderEntry(docId, entry) {
     deleteEntry(docId, card, entriesMap.get(docId));
   });
 
+  // ── Collapsible toggle ────────────────────────────────────
+  const collapseWrapper = card.querySelector('.entry-description-wrapper');
+  const expandBtn = card.querySelector('.entry-expand-btn');
+
+  expandBtn.addEventListener('click', () => {
+    const isExpanded = collapseWrapper.classList.contains('is-expanded');
+    if (isExpanded) {
+      expandedEntries.delete(docId);
+      collapseWrapper.classList.remove('is-expanded');
+      card.classList.remove('is-expanded');
+      expandBtn.textContent = '▼ Weiterlesen';
+    } else {
+      expandedEntries.add(docId);
+      collapseWrapper.classList.add('is-expanded');
+      card.classList.add('is-expanded');
+      expandBtn.textContent = '▲ Einklappen';
+    }
+  });
+
   return card;
+}
+
+// ── Apply initial collapsed/expanded state after card is in the DOM ──
+// Must be called after appendChild/insertBefore — scrollHeight is only
+// meaningful once the element is rendered.
+function applyCollapseState(card, docId) {
+  const wrapper = card.querySelector('.entry-description-wrapper');
+  const btn = card.querySelector('.entry-expand-btn');
+
+  if (wrapper.scrollHeight <= wrapper.offsetHeight) {
+    // Short entry — content fits within collapsed height, skip collapse UI.
+    // Only add is-expanded to the wrapper (to remove max-height clip),
+    // NOT to the card root — short entries should not get the gold border.
+    wrapper.classList.add('is-expanded');
+    btn.hidden = true;
+    return;
+  }
+
+  if (expandedEntries.has(docId)) {
+    wrapper.classList.add('is-expanded');
+    card.classList.add('is-expanded');
+    btn.textContent = '▲ Einklappen';
+  } else {
+    btn.textContent = '▼ Weiterlesen';
+  }
 }
 
 // ── Modal ─────────────────────────────────────────────────────
@@ -578,6 +631,9 @@ async function saveEntry(e) {
       });
     }
     pendingImagePaths = []; // saved successfully — no orphan cleanup needed
+    if (!editingEntryId) {
+      expandedEntries.add(pendingEntryRef.id); // new entry appears expanded
+    }
     await closeModal();
   } catch (err) {
     document.getElementById('formError').textContent = 'Fehler beim Speichern. Bitte erneut versuchen.';
