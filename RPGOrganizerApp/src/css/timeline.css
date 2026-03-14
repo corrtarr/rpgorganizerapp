@@ -589,3 +589,39 @@
   border-top: 1px solid var(--border-gold);
   margin: 0.75rem 0;
 }
+
+/* ── Timeline read view — Quill format normalization ─────── */
+.entry-description h1,
+.entry-description h2,
+.entry-description h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0.75rem 0 0.25rem;
+}
+.entry-description h1 { font-size: 1.05rem; }
+.entry-description h2 { font-size: 0.95rem; }
+.entry-description h3 { font-size: 0.88rem; }
+
+.entry-description hr {
+  border: none;
+  border-top: 1px solid var(--border-gold);
+  margin: 0.75rem 0;
+}
+
+/* Quill alignment classes */
+.entry-description .ql-align-left    { text-align: left; }
+.entry-description .ql-align-center  { text-align: center; }
+.entry-description .ql-align-right   { text-align: right; }
+.entry-description .ql-align-justify { text-align: justify; }
+
+/* Quill indent classes — levels 1–8 */
+.entry-description .ql-indent-1 { padding-left: 1.5rem; }
+.entry-description .ql-indent-2 { padding-left: 3rem; }
+.entry-description .ql-indent-3 { padding-left: 4.5rem; }
+.entry-description .ql-indent-4 { padding-left: 6rem; }
+.entry-description .ql-indent-5 { padding-left: 7.5rem; }
+.entry-description .ql-indent-6 { padding-left: 9rem; }
+.entry-description .ql-indent-7 { padding-left: 10.5rem; }
+.entry-description .ql-indent-8 { padding-left: 12rem; }
