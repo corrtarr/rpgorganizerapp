@@ -23,7 +23,6 @@ let pendingImagePaths = []; // storage paths for orphan cleanup
 let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
 let pendingRange     = null; // Quill selection range saved before file picker opens
 let isUploading      = false;
-const COLLAPSED_HEIGHT_PX = 72; // = 4.5rem at 16px base; must match CSS .entry-description-wrapper max-height
 const expandedEntries = new Set(); // doc IDs expanded this session
 
 // ── Auth guard ───────────────────────────────────────────────
@@ -373,10 +372,9 @@ function renderEntry(docId, entry) {
 function applyCollapseState(card, docId) {
   const wrapper = card.querySelector('.entry-description-wrapper');
   const btn = card.querySelector('.entry-expand-btn');
-  const descEl = card.querySelector('.entry-description');
 
-  if (descEl.scrollHeight <= COLLAPSED_HEIGHT_PX) {
-    // Short entry — skip collapse UI entirely.
+  if (wrapper.scrollHeight <= wrapper.offsetHeight) {
+    // Short entry — content fits within collapsed height, skip collapse UI.
     // Only add is-expanded to the wrapper (to remove max-height clip),
     // NOT to the card root — short entries should not get the gold border.
     wrapper.classList.add('is-expanded');
@@ -390,7 +388,6 @@ function applyCollapseState(card, docId) {
     btn.textContent = '▲ Einklappen';
   } else {
     btn.textContent = '▼ Weiterlesen';
-    // collapsed state is the default — no classes needed
   }
 }
 
