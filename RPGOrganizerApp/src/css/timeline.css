@@ -571,59 +571,47 @@
   border-color: var(--gold);
 }
 
-/* ── Editor tabs ─────────────────────────────────────────────── */
-
-.editor-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border-gold);
-  margin-bottom: 0;
-}
-
-.editor-tab {
-  background: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 3px 3px 0 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: 'Cinzel', serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.5rem 1.2rem;
-  position: relative;
-  bottom: -1px;
-  transition: color 0.15s;
-}
-
-.editor-tab.active {
-  background: var(--bg-card);
-  border-color: var(--border-gold);
-  color: var(--gold-light);
-}
-
-.editor-tab:hover:not(.active) {
-  color: var(--gold);
-}
-
 /* ── Toast UI dark theme overrides ──────────────────────────── */
 
 .toastui-editor-defaultUI {
-  border: 1px solid var(--border-gold);
-  border-top: none;
-  border-radius: 0 3px 3px 3px;
-  background: var(--bg-card);
-  color: var(--text-light);
-  font-family: 'Lora', serif;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: 3px !important;
+  background: var(--bg-card) !important;
+  color: var(--text-light) !important;
+  font-family: 'Lora', serif !important;
 }
 
-.toastui-editor-toolbar {
-  background: rgba(0, 0, 0, 0.3) !important;
+.toastui-editor-defaultUI .toastui-editor-main-container,
+.toastui-editor-defaultUI .toastui-editor-main {
+  background: var(--bg-card) !important;
+}
+
+.toastui-editor-toolbar,
+.toastui-editor-defaultUI-toolbar {
+  background: #0d0b07 !important;
   border-bottom: 1px solid var(--border-gold) !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+/* Hide the internal Write/Preview tab bar in Markdown mode — the bottom switcher handles this */
+.toastui-editor-md-tab-container {
+  display: none !important;
 }
 
 .toastui-editor-toolbar-item-wrapper button {
-  color: var(--gold) !important;
+  border: none !important;
+  background: none !important;
+}
+
+.toastui-editor-toolbar-icons {
+  filter: sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1) !important;
+  opacity: 0.8;
+}
+
+.toastui-editor-toolbar-item-wrapper button:hover .toastui-editor-toolbar-icons,
+.toastui-editor-toolbar-item-wrapper button.active .toastui-editor-toolbar-icons {
+  filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.4) !important;
+  opacity: 1;
 }
 
 .toastui-editor-toolbar-item-wrapper button:hover {
@@ -658,10 +646,13 @@
 
 .toastui-editor-contents h1,
 .toastui-editor-contents h2,
-.toastui-editor-contents h3 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold-light);
-  border-bottom: none;
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.toastui-editor-contents h5,
+.toastui-editor-contents h6 {
+  font-family: 'Cinzel', serif !important;
+  color: var(--gold-light) !important;
+  border-bottom: none !important;
 }
 
 .toastui-editor-contents hr {
@@ -678,6 +669,65 @@
 }
 
 .toastui-editor-contents p { line-height: 1.7; }
+
+.toastui-editor-contents,
+.toastui-editor-contents p,
+.toastui-editor-contents li,
+.toastui-editor-contents blockquote {
+  color: var(--text-light) !important;
+  font-family: 'Lora', serif !important;
+  font-size: 0.92rem !important;
+}
+
+/* ── Toast UI mode switcher (bottom tabs) ────────────────────── */
+
+.toastui-editor-mode-switch,
+.toastui-editor-dark .toastui-editor-mode-switch {
+  background: #0d0b07 !important;
+  border-top: 1px solid var(--border-gold) !important;
+  border-radius: 0 0 3px 3px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.toastui-editor-tabs,
+.toastui-editor-dark .toastui-editor-tabs {
+  background: #0d0b07 !important;
+  border: none !important;
+  height: 32px !important;
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.toastui-editor-tabs .tab-item,
+.toastui-editor-mode-switch .tab-item,
+.toastui-editor-dark .toastui-editor-mode-switch .tab-item {
+  background: #0d0b07 !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: var(--text-light) !important;
+  font-weight: 500 !important;
+  font-family: 'Cinzel', serif !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 0 1rem !important;
+  width: auto !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  cursor: pointer !important;
+  transition: color 0.15s !important;
+}
+
+.toastui-editor-tabs .tab-item.active,
+.toastui-editor-dark .toastui-editor-mode-switch .tab-item.active {
+  background: #0d0b07 !important;
+  border: none !important;
+  border-bottom: 2px solid var(--gold) !important;
+  color: var(--gold-light) !important;
+}
 
 /* ── Narrow screen: hide Markdown split preview ──────────────── */
 

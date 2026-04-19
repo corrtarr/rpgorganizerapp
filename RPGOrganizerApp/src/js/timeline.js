@@ -6,9 +6,9 @@ import {
   query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import Editor from '@toast-ui/editor';
-import Viewer from '@toast-ui/editor/dist/toastui-editor-viewer';
+import Viewer from '@toast-ui/editor/viewer';
 import '@toast-ui/editor/dist/toastui-editor.css';
-import '@toast-ui/editor/dist/toastui-editor-viewer.css';
+import '@toast-ui/editor/toastui-editor-viewer.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import { formatDate, formatInGameDateRange, nextInGameDay, getMaxDayForMonth } from './timeline-utils.js';
 
@@ -98,7 +98,6 @@ async function init() {
     el: document.getElementById('toastEditor'),
     height: '320px',
     initialEditType: 'wysiwyg',
-    previewStyle: 'tab',
     placeholder: 'Beschreibung des Ereignisses...',
     toolbarItems: [
       ['heading', 'bold', 'italic'],
@@ -110,20 +109,6 @@ async function init() {
       addImageBlobHook: handleImageUpload,
     },
     theme: 'dark',
-  });
-
-  document.getElementById('tabVisuell').addEventListener('click', () => {
-    editor.changeMode('wysiwyg');
-    editor.setPreviewStyle('tab');
-    document.getElementById('tabVisuell').classList.add('active');
-    document.getElementById('tabMarkdown').classList.remove('active');
-  });
-
-  document.getElementById('tabMarkdown').addEventListener('click', () => {
-    editor.changeMode('markdown');
-    editor.setPreviewStyle('vertical');
-    document.getElementById('tabMarkdown').classList.add('active');
-    document.getElementById('tabVisuell').classList.remove('active');
   });
 
   // Lightbox: open when clicking an image in the timeline
@@ -390,11 +375,8 @@ function openModal(docId = null, entry = null) {
   const isEdit = docId !== null;
   const uploadError = document.getElementById('uploadError');
 
-  // Reset editor to Visuell tab on every open
+  // Reset editor to WYSIWYG on every open
   editor.changeMode('wysiwyg');
-  editor.setPreviewStyle('tab');
-  document.getElementById('tabVisuell').classList.add('active');
-  document.getElementById('tabMarkdown').classList.remove('active');
 
   document.getElementById('entryModal').hidden = false;
   document.getElementById('formError').textContent = '';
