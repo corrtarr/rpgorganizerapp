@@ -228,8 +228,8 @@
   border: 1px solid var(--border-gold);
   border-radius: 4px;
   padding: 2rem;
-  width: 100%;
-  max-width: 640px;
+  width: 80vw;
+  max-width: 1200px;
   box-shadow: 0 0 60px rgba(0,0,0,0.6);
 }
 
@@ -320,62 +320,6 @@
 .btn-secondary:hover {
   color: var(--gold);
   border-color: var(--gold);
-}
-
-/* ── Quill dark theme overrides ──────────────────────────────── */
-
-.ql-toolbar.ql-snow {
-  background: rgba(0,0,0,0.3);
-  border-color: var(--border-gold) !important;
-  border-radius: 2px 2px 0 0;
-}
-
-.ql-container.ql-snow {
-  background: rgba(0,0,0,0.4);
-  border-color: var(--border-gold) !important;
-  border-radius: 0 0 2px 2px;
-  font-family: 'Lora', serif;
-  font-size: 0.95rem;
-  color: var(--text-light);
-  min-height: 140px;
-}
-
-.ql-editor.ql-blank::before {
-  color: var(--text-muted) !important;
-  font-style: italic;
-}
-
-.ql-snow .ql-stroke {
-  stroke: var(--text-muted) !important;
-}
-
-.ql-snow .ql-fill {
-  fill: var(--text-muted) !important;
-}
-
-.ql-snow.ql-toolbar button:hover .ql-stroke,
-.ql-snow.ql-toolbar button.ql-active .ql-stroke {
-  stroke: var(--gold) !important;
-}
-
-.ql-snow.ql-toolbar button:hover .ql-fill,
-.ql-snow.ql-toolbar button.ql-active .ql-fill {
-  fill: var(--gold) !important;
-}
-
-.ql-snow .ql-picker-label {
-  color: var(--text-muted) !important;
-}
-
-/* ── Quill toolbar — divider button icon ─────────────────── */
-.ql-snow.ql-toolbar button.ql-divider::after {
-  content: '―';
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1;
-}
-.ql-snow.ql-toolbar button.ql-divider:hover::after {
-  color: var(--gold);
 }
 
 /* ── Entry actions (3-dot menu) ──────────────────────────────── */
@@ -525,7 +469,6 @@
 }
 
 /* ── Inline images in timeline entries ───────────────────── */
-.ql-editor img,
 .entry-description img {
   max-width: 100%;
   height: auto;
@@ -559,38 +502,7 @@
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
 }
 
-/* ── Quill toolbar — header picker dropdown ──────────────── */
-.ql-snow .ql-picker.ql-header .ql-picker-options {
-  background: #1a1509;
-  border-color: var(--border-gold);
-}
-.ql-snow .ql-picker.ql-header .ql-picker-item {
-  color: var(--text-muted);
-}
-.ql-snow .ql-picker.ql-header .ql-picker-item:hover {
-  color: var(--gold);
-}
-
-/* ── Quill editor write view — headers and HR ────────────── */
-#quillEditor h1,
-#quillEditor h2,
-#quillEditor h3 {
-  font-family: 'Cinzel', serif;
-  color: var(--gold-light);
-  font-weight: 600;
-  margin: 0.5rem 0 0.25rem;
-}
-#quillEditor h1 { font-size: 1.2rem; }
-#quillEditor h2 { font-size: 1.05rem; }
-#quillEditor h3 { font-size: 0.95rem; }
-
-#quillEditor hr {
-  border: none;
-  border-top: 1px solid var(--border-gold);
-  margin: 0.75rem 0;
-}
-
-/* ── Timeline read view — Quill format normalization ─────── */
+/* ── Timeline read view — entry description formatting ───── */
 .entry-description h1,
 .entry-description h2,
 .entry-description h3 {
@@ -609,22 +521,6 @@
   border-top: 1px solid var(--border-gold);
   margin: 0.75rem 0;
 }
-
-/* Quill alignment classes */
-.entry-description .ql-align-left    { text-align: left; }
-.entry-description .ql-align-center  { text-align: center; }
-.entry-description .ql-align-right   { text-align: right; }
-.entry-description .ql-align-justify { text-align: justify; }
-
-/* Quill indent classes — levels 1–8 */
-.entry-description .ql-indent-1 { padding-left: 1.5rem; }
-.entry-description .ql-indent-2 { padding-left: 3rem; }
-.entry-description .ql-indent-3 { padding-left: 4.5rem; }
-.entry-description .ql-indent-4 { padding-left: 6rem; }
-.entry-description .ql-indent-5 { padding-left: 7.5rem; }
-.entry-description .ql-indent-6 { padding-left: 9rem; }
-.entry-description .ql-indent-7 { padding-left: 10.5rem; }
-.entry-description .ql-indent-8 { padding-left: 12rem; }
 
 /* ── Collapsible entries ─────────────────────────────────── */
 
@@ -673,4 +569,179 @@
 
 .timeline-entry.is-expanded {
   border-color: var(--gold);
+}
+
+/* ── Toast UI dark theme overrides ──────────────────────────── */
+
+.toastui-editor-defaultUI {
+  border: 1px solid var(--border-gold) !important;
+  border-radius: 3px !important;
+  background: var(--bg-card) !important;
+  color: var(--text-light) !important;
+  font-family: 'Lora', serif !important;
+}
+
+.toastui-editor-defaultUI .toastui-editor-main-container,
+.toastui-editor-defaultUI .toastui-editor-main {
+  background: var(--bg-card) !important;
+}
+
+.toastui-editor-toolbar,
+.toastui-editor-defaultUI-toolbar {
+  background: #0d0b07 !important;
+  border-bottom: 1px solid var(--border-gold) !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+/* Hide the internal Write/Preview tab bar in Markdown mode — the bottom switcher handles this */
+.toastui-editor-md-tab-container {
+  display: none !important;
+}
+
+.toastui-editor-toolbar-item-wrapper button {
+  border: none !important;
+  background: none !important;
+}
+
+.toastui-editor-toolbar-icons {
+  filter: sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1) !important;
+  opacity: 0.8;
+}
+
+.toastui-editor-toolbar-item-wrapper button:hover .toastui-editor-toolbar-icons,
+.toastui-editor-toolbar-item-wrapper button.active .toastui-editor-toolbar-icons {
+  filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.4) !important;
+  opacity: 1;
+}
+
+.toastui-editor-toolbar-item-wrapper button:hover {
+  background: rgba(139, 105, 20, 0.2) !important;
+}
+
+.toastui-editor-toolbar-divider {
+  background: var(--border-gold) !important;
+  opacity: 0.4;
+}
+
+.toastui-editor-md-container,
+.toastui-editor-ww-container {
+  background: var(--bg-card) !important;
+}
+
+.toastui-editor-contents,
+.toastui-editor-md-code-block-line-background {
+  color: var(--text-light) !important;
+  font-family: 'Lora', serif !important;
+}
+
+.toastui-editor-md-container .toastui-editor {
+  color: #9db89a !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+.toastui-editor-md-splitter {
+  background: var(--border-gold) !important;
+  opacity: 0.5;
+}
+
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.toastui-editor-contents h5,
+.toastui-editor-contents h6 {
+  font-family: 'Cinzel', serif !important;
+  color: var(--gold-light) !important;
+  border-bottom: none !important;
+}
+
+.toastui-editor-contents hr {
+  border-top: 1px solid var(--border-gold);
+  border-bottom: none;
+  opacity: 0.5;
+}
+
+.toastui-editor-popup-body,
+.toastui-editor-popup {
+  background: var(--bg-card) !important;
+  border-color: var(--border-gold) !important;
+  color: var(--text-light) !important;
+}
+
+.toastui-editor-contents p { line-height: 1.7; }
+
+.toastui-editor-contents,
+.toastui-editor-contents p,
+.toastui-editor-contents li,
+.toastui-editor-contents blockquote {
+  color: var(--text-light) !important;
+  font-family: 'Lora', serif !important;
+  font-size: 0.92rem !important;
+}
+
+/* ── Toast UI mode switcher (bottom tabs) ────────────────────── */
+
+.toastui-editor-mode-switch,
+.toastui-editor-dark .toastui-editor-mode-switch {
+  background: #0d0b07 !important;
+  border-top: 1px solid var(--border-gold) !important;
+  border-radius: 0 0 3px 3px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.toastui-editor-tabs,
+.toastui-editor-dark .toastui-editor-tabs {
+  background: #0d0b07 !important;
+  border: none !important;
+  height: 32px !important;
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.toastui-editor-tabs .tab-item,
+.toastui-editor-mode-switch .tab-item,
+.toastui-editor-dark .toastui-editor-mode-switch .tab-item {
+  background: #0d0b07 !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: var(--text-light) !important;
+  font-weight: 500 !important;
+  font-family: 'Cinzel', serif !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 0 1rem !important;
+  width: auto !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  cursor: pointer !important;
+  transition: color 0.15s !important;
+}
+
+.toastui-editor-tabs .tab-item.active,
+.toastui-editor-dark .toastui-editor-mode-switch .tab-item.active {
+  background: #0d0b07 !important;
+  border: none !important;
+  border-bottom: 2px solid var(--gold) !important;
+  color: var(--gold-light) !important;
+}
+
+/* ── Narrow screen: hide Markdown split preview ──────────────── */
+
+@media (max-width: 900px) {
+  .modal-card {
+    width: 95vw;
+  }
+
+  .toastui-editor-md-container ~ .toastui-editor-md-splitter,
+  .toastui-editor-preview {
+    display: none !important;
+  }
+
+  .toastui-editor-md-container {
+    width: 100% !important;
+  }
 }

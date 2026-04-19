@@ -17,7 +17,8 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-"firebase": "^12.10.0",
-    "quill": "^2.0.3"
+    "@toast-ui/editor": "^3.2.2",
+    "firebase": "^12.10.0",
+    "turndown": "^7.2.4"
   }
 }

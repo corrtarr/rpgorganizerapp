@@ -5,11 +5,14 @@ import {
   collection, setDoc, getDocs, doc, updateDoc,
   query, orderBy, where, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
-import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
+import Editor from '@toast-ui/editor';
+import Viewer from '@toast-ui/editor/viewer';
+import '@toast-ui/editor/dist/toastui-editor.css';
+import '@toast-ui/editor/toastui-editor-viewer.css';
+import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import { formatDate, formatInGameDateRange, nextInGameDay, getMaxDayForMonth } from './timeline-utils.js';
 
-let quill;
+let editor;
 let players = [];
 let lastEntryDate = { day: null, month: null, year: null };
 let nextSessionNumber = 1;
@@ -21,8 +24,6 @@ const entriesMap = new Map();
 let pendingImageUrls = [];   // URLs uploaded in the current editing session
 let pendingImagePaths = []; // storage paths for orphan cleanup
 let pendingEntryRef  = null; // Firestore doc ref pre-generated for new entries
-let pendingRange     = null; // Quill selection range saved before file picker opens
-let isUploading      = false;
 const expandedEntries = new Set(); // doc IDs expanded this session
 
 // ── Auth guard ───────────────────────────────────────────────
@@ -48,13 +49,6 @@ function populateDaySelect(selectEl, month) {
   }
   if (current && current <= max) selectEl.value = current;
 }
-
-// ── Custom blots ──────────────────────────────────────────────
-const BlockEmbed = Quill.import('blots/block/embed');
-class DividerBlot extends BlockEmbed {}
-DividerBlot.blotName = 'divider';
-DividerBlot.tagName = 'hr';
-Quill.register({ 'formats/divider': DividerBlot });
 
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
@@ -100,30 +94,22 @@ async function init() {
     }
   });
 
-  quill = new Quill('#quillEditor', {
-    theme: 'snow',
+  editor = new Editor({
+    el: document.getElementById('toastEditor'),
+    height: '320px',
+    initialEditType: 'wysiwyg',
     placeholder: 'Beschreibung des Ereignisses...',
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline'],
-        [{ align: [] }],  // empty array = full default set (left/center/right/justify)
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ indent: '-1' }, { indent: '+1' }],
-        ['blockquote', 'divider'],
-        ['image'],
-        ['clean']
-      ]
-    }
+    toolbarItems: [
+      ['heading', 'bold', 'italic'],
+      ['hr', 'quote'],
+      ['ul', 'ol'],
+      ['image'],
+    ],
+    hooks: {
+      addImageBlobHook: handleImageUpload,
+    },
+    theme: 'dark',
   });
-
-  quill.getModule('toolbar').addHandler('image', handleImageUpload);
-  quill.getModule('toolbar').addHandler('divider', () => {
-    const range = quill.getSelection(true) ?? { index: quill.getLength(), length: 0 };
-    quill.insertEmbed(range.index, 'divider', true, Quill.sources.USER);
-    quill.setSelection(range.index + 1, Quill.sources.SILENT);
-  });
-  document.getElementById('imageUploadInput').addEventListener('change', onImageFileSelected);
 
   // Lightbox: open when clicking an image in the timeline
   document.getElementById('timelineList').addEventListener('click', (e) => {
@@ -142,48 +128,35 @@ async function init() {
   subscribeToTimeline();
 }
 
-// ── Image upload ──────────────────────────────────────────────
-function handleImageUpload() {
-  if (isUploading) return;
-  pendingRange = quill.getSelection() ?? { index: quill.getLength(), length: 0 };
-  document.getElementById('imageUploadInput').click();
-}
-
-async function onImageFileSelected(event) {
-  if (event.target.files.length === 0) return;
+// ── Image upload (Toast UI hook) ──────────────────────────────
+async function handleImageUpload(blob, callback) {
   if (pendingEntryRef === null && editingEntryId === null) {
-    console.error('onImageFileSelected: no entry ref or editingEntryId');
+    callback('', 'Kein Eintrag vorhanden');
     return;
   }
 
   const entryId = pendingEntryRef !== null ? pendingEntryRef.id : editingEntryId;
-  const file = event.target.files[0];
-  event.target.value = '';
-
-  isUploading = true;
-  document.querySelector('.ql-image').disabled = true;
-  document.querySelector('.btn-submit').disabled = true;
   const uploadError = document.getElementById('uploadError');
   uploadError.textContent = '';
   uploadError.hidden = true;
+  document.querySelector('.btn-submit').disabled = true;
 
-  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[file.type] ?? 'bin';
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' }[blob.type] ?? 'bin';
   const path = `timeline/${entryId}/${crypto.randomUUID()}.${ext}`;
   const storageRef = ref(storage, path);
 
   try {
-    await uploadBytes(storageRef, file);
+    await uploadBytes(storageRef, blob);
     const url = await getDownloadURL(storageRef);
-    quill.insertEmbed(pendingRange.index, 'image', url);
     pendingImageUrls.push(url);
     pendingImagePaths.push(path);
+    callback(url, blob.name || 'bild');
   } catch (err) {
     console.error('Image upload failed:', err);
     uploadError.textContent = 'Bild konnte nicht hochgeladen werden. Bitte erneut versuchen.';
     uploadError.hidden = false;
+    callback('', 'Upload fehlgeschlagen');
   } finally {
-    isUploading = false;
-    document.querySelector('.ql-image').disabled = false;
     document.querySelector('.btn-submit').disabled = false;
   }
 }
@@ -303,7 +276,7 @@ function renderEntry(docId, entry) {
     </div>
     <h3 class="entry-title"></h3>
     <div class="entry-description-wrapper">
-      <div class="entry-description ql-editor"></div>
+      <div class="entry-description"></div>
       <div class="entry-description-fade"></div>
     </div>
     <button class="entry-expand-btn" type="button"></button>
@@ -315,7 +288,10 @@ function renderEntry(docId, entry) {
   const authorPlayer = players.find(p => p.id === entry.authorId);
   if (authorPlayer) authorEl.style.color = authorPlayer.color;
   card.querySelector('.entry-title').textContent = entry.title;
-  card.querySelector('.entry-description').innerHTML = entry.description; // Quill HTML, trusted rich text
+  new Viewer({
+    el: card.querySelector('.entry-description'),
+    initialValue: entry.description || '',
+  });
 
   const menuBtn = card.querySelector('.entry-menu-btn');
   const menu = card.querySelector('.entry-menu');
@@ -399,6 +375,9 @@ function openModal(docId = null, entry = null) {
   const isEdit = docId !== null;
   const uploadError = document.getElementById('uploadError');
 
+  // Reset editor to WYSIWYG on every open
+  editor.changeMode('wysiwyg');
+
   document.getElementById('entryModal').hidden = false;
   document.getElementById('formError').textContent = '';
 
@@ -410,7 +389,6 @@ function openModal(docId = null, entry = null) {
     pendingEntryRef = null;
     pendingImageUrls = [];
     pendingImagePaths = [];
-    pendingRange = null;
     document.querySelector('.btn-submit').disabled = false;
     uploadError.textContent = '';
     uploadError.hidden = true;
@@ -439,12 +417,11 @@ function openModal(docId = null, entry = null) {
     sessionDisplay.textContent = entry.sessionNumber ? `Sitzung ${entry.sessionNumber}` : '';
     sessionDisplay.hidden = !entry.sessionNumber;
 
-    quill.root.innerHTML = entry.description || '';
+    editor.setMarkdown(entry.description || '');
   } else {
     pendingEntryRef = doc(collection(db, 'timeline'));
     pendingImageUrls = [];
     pendingImagePaths = [];
-    pendingRange = null;
     document.querySelector('.btn-submit').disabled = false;
     uploadError.textContent = '';
     uploadError.hidden = true;
@@ -453,7 +430,7 @@ function openModal(docId = null, entry = null) {
     document.getElementById('entryForm').reset();
     document.getElementById('endDateRow').hidden = true;
     sessionDisplay.hidden = true;
-    quill.setContents([]);
+    editor.setMarkdown('');
 
     if (lastEntryDate.month) {
       document.getElementById('inGameMonth').value = lastEntryDate.month;
@@ -482,7 +459,6 @@ async function closeModal() {
   }
   pendingImageUrls = [];
   pendingEntryRef = null;
-  pendingRange = null;
   document.getElementById('entryModal').hidden = true;
   editingEntryId = null;
 }
@@ -602,7 +578,7 @@ async function saveEntry(e) {
 
   const fields = {
     title: document.getElementById('entryTitle').value.trim(),
-    description: quill.root.innerHTML,
+    description: editor.getMarkdown(),
     inGameDay: parseInt(document.getElementById('inGameDay').value) || null,
     inGameMonth: document.getElementById('inGameMonth').value,
     inGameYear: parseInt(document.getElementById('inGameYear').value) || null,
